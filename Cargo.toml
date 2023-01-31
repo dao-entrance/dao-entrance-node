@@ -1,0 +1,25 @@
+[workspace]
+
+exclude = [
+ 	"native-nostd-hasher",
+]
+
+members = [
+	# DPOS
+	# "apps/full/executor",
+	# "apps/full/rpc",
+	# "apps/full/node",
+	# "apps/full/runtime",
+	# "apps/full/primitives",
+
+	# POS
+	"apps/pos/node",
+	"apps/pos/runtime",
+
+	# 工具
+	# "tools/hash",
+	# "tools/subkey",
+	# "tools/chain-spec-builder",
+]
+
+resolver = "2"
