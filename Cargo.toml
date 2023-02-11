@@ -10,16 +10,24 @@ members = [
 	# "apps/full/rpc",
 	# "apps/full/node",
 	# "apps/full/runtime",
-	# "apps/full/primitives",
 
 	# POS
-	"apps/pos/node",
-	"apps/pos/runtime",
+	"apps/node-pos/node",
+	"apps/node-pos/runtime",
+
+	# pellets
+	"apps/pallets/daoent-dao",
+	"apps/pallets/daoent-sudo",
+	"apps/pallets/daoent-gov",
+	"apps/pallets/daoent-assets",
 
 	# 工具
 	# "tools/hash",
 	# "tools/subkey",
 	# "tools/chain-spec-builder",
+
+	"apps/primitives"
+
 ]
 
 resolver = "2"
