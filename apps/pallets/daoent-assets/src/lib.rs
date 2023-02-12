@@ -325,26 +325,10 @@ pub mod pallet {
                 Error::<T>::AssetNotExists
             );
 
+            // 从DAO转出手续费 TODO
             match daoent_dao::Daos::<T>::get(asset_id) {
                 Some(dao) => {
                     let _dao_account = dao.dao_account_id;
-                    // let fee: Fee<VcBalanceOf<T>, Permill> = pallet_vc::Pallet::<T>::fees(dao_id);
-                    // match fee {
-                    // 			Fee::Permill(x) => {
-                    // 				let real_fee = x * amount;
-                    // 				<T as pallet::Config>::MultiCurrency::transfer(asset_id, &from, &dao_account, real_fee)?;
-                    // 				<T as pallet::Config>::MultiCurrency::reserve(asset_id, &dao_account, real_fee);
-                    // 			}
-                    // 			Fee::Amount(x) => {
-                    // 				<T as pallet_vc::Config>::MultiCurrency::transfer(
-                    // 					T::USDCurrencyId::get(),
-                    // 					&from,
-                    // 					&dao_account,
-                    // 					x,
-                    // 				)?;
-                    // 				<T as pallet_vc::Config>::MultiCurrency::reserve(T::USDCurrencyId::get(), &dao_account, x);
-                    // 			}
-                    // }
                 }
                 _ => {}
             };
@@ -375,6 +359,33 @@ pub mod pallet {
             });
 
             Ok(().into())
+        }
+
+        /// 添加成员
+        #[pallet::call_index(008)]
+        #[pallet::weight(50_000_000)]
+        pub fn add_member(
+            origin: OriginFor<T>,
+            dao_id: DaoAssetId,
+            who: T::AccountId,
+        ) -> DispatchResult {
+            daoent_dao::Pallet::<T>::try_add_member(origin, dao_id, who)?;
+
+            // Self::deposit_event(Event::Success);
+            Ok(())
+        }
+
+        /// 删除成员
+        #[pallet::call_index(009)]
+        #[pallet::weight(50_000_000)]
+        pub fn remove_member(
+            origin: OriginFor<T>,
+            dao_id: DaoAssetId,
+            who: T::AccountId,
+        ) -> DispatchResult {
+            daoent_dao::Pallet::<T>::try_remove_member(origin, dao_id, who)?;
+
+            Ok(())
         }
     }
 

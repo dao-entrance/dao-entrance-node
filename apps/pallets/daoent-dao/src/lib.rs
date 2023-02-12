@@ -1,34 +1,26 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::type_complexity)]
-pub use codec::MaxEncodedLen;
-pub use daoent_primitives::{
+use codec::MaxEncodedLen;
+use daoent_primitives::{
     traits::{AfterCreate, BaseCallFilter},
-    types::{AccountIdType, DaoAssetId, RealCallId},
+    types::{AccountIdType, DaoAssetId},
 };
-pub use frame_support::{
+use frame_support::{
     codec::{Decode, Encode},
     traits::IsSubType,
-    PalletId,
 };
 pub use pallet::*;
-pub use scale_info::{prelude::boxed::Box, TypeInfo};
-pub use sp_runtime::{
-    traits::{BlockNumberProvider, Hash},
-    RuntimeDebug,
-};
-pub use sp_std::{
-    marker::PhantomData,
-    prelude::{self, *},
-    result,
-};
+use scale_info::TypeInfo;
+use sp_runtime::{traits::BlockNumberProvider, RuntimeDebug};
+use sp_std::{prelude::*, result};
 
-pub mod weights;
+mod weights;
 use weights::WeightInfo;
 
 #[cfg(test)]
-pub mod mock;
+mod mock;
 #[cfg(test)]
-pub mod tests;
+mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -370,34 +362,6 @@ pub mod pallet {
                 )
                 .map_err(|_| Error::<T>::GuildCreateError)?;
             <Guilds<T>>::insert(dao_id, &guilds);
-
-            Self::deposit_event(Event::Success);
-            Ok(())
-        }
-
-        /// 添加成员
-        #[pallet::call_index(003)]
-        #[pallet::weight(50_000_000)]
-        pub fn add_member(
-            origin: OriginFor<T>,
-            dao_id: DaoAssetId,
-            who: T::AccountId,
-        ) -> DispatchResult {
-            Self::try_add_member(origin, dao_id, who)?;
-
-            Self::deposit_event(Event::Success);
-            Ok(())
-        }
-
-        /// 删除成员
-        #[pallet::call_index(004)]
-        #[pallet::weight(50_000_000)]
-        pub fn remove_member(
-            origin: OriginFor<T>,
-            dao_id: DaoAssetId,
-            who: T::AccountId,
-        ) -> DispatchResult {
-            Self::try_remove_member(origin, dao_id, who)?;
 
             Self::deposit_event(Event::Success);
             Ok(())

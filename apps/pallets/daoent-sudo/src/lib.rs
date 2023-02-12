@@ -1,11 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 /// Sudo Module
-pub use daoent_dao::{self, BaseCallFilter};
-pub use frame_support::traits::UnfilteredDispatchable;
-pub use pallet::*;
-pub use scale_info::{prelude::boxed::Box, TypeInfo};
-pub use sp_std::{fmt::Debug, result};
+use daoent_dao::{self};
+use frame_support::traits::UnfilteredDispatchable;
+use scale_info::prelude::boxed::Box;
+use sp_std::result;
 
 use daoent_primitives::types::DaoAssetId;
 
@@ -18,8 +17,10 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
-pub mod weights;
+mod weights;
 use weights::WeightInfo;
+
+pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -95,7 +96,7 @@ pub mod pallet {
             let sudo = Self::check_sudo(dao_id, origin)?;
             let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
             ensure!(
-                asset_id.contains(*call.clone()),
+                daoent_primitives::traits::BaseCallFilter::contains(&asset_id, *call.clone()),
                 daoent_dao::Error::<T>::InVailCall
             );
 

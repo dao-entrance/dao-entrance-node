@@ -3,7 +3,7 @@
 
 use crate as daoent_assets;
 use crate::mock::*;
-use daoent_dao::AccountIdType;
+use daoent_primitives::types::AccountIdType;
 use daoent_primitives::types::DaoAssetId;
 use frame_support::{assert_noop, assert_ok, debug, log::debug};
 

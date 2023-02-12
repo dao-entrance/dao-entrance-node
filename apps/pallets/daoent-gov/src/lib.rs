@@ -1,26 +1,29 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::type_complexity)]
 
-pub use codec::{Decode, Encode};
-use daoent_dao::{self, Hash, Vec};
-use daoent_primitives::types::DaoAssetId;
+use codec::{Decode, Encode};
 use frame_support::dispatch::{DispatchResult as DResult, UnfilteredDispatchable};
-pub use frame_support::{
-    traits::{Currency, Defensive, Get, ReservableCurrency},
-    BoundedVec, RuntimeDebug,
+use frame_support::{
+    traits::{Currency, Defensive, ReservableCurrency},
+    RuntimeDebug,
 };
-pub use pallet::*;
 use scale_info::TypeInfo;
-pub use sp_runtime::traits::{Saturating, Zero};
+use sp_runtime::traits::{Saturating, Zero};
 use sp_runtime::{
-    traits::{BlockNumberProvider, CheckedAdd, CheckedMul},
+    traits::{BlockNumberProvider, CheckedAdd, CheckedMul, Hash},
     DispatchError,
 };
 use sp_std::boxed::Box;
-pub use sp_std::{fmt::Debug, result};
-pub use traits::*;
+use sp_std::result;
+use traits::*;
+
+use daoent_dao::{self};
+use daoent_primitives::traits::BaseCallFilter;
+use daoent_primitives::types::DaoAssetId;
 
 use weights::WeightInfo;
+
+pub use pallet::*;
 
 pub type PropIndex = u32;
 pub type ReferendumIndex = u32;
@@ -118,7 +121,6 @@ pub enum ReferendumInfo<BlockNumber, Call, Balance> {
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use daoent_dao::BaseCallFilter;
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
 

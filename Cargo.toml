@@ -20,6 +20,7 @@ members = [
 	"apps/pallets/daoent-sudo",
 	"apps/pallets/daoent-gov",
 	"apps/pallets/daoent-assets",
+	"apps/pallets/daoent-project",
 
 	# 工具
 	# "tools/hash",
