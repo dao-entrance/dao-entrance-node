@@ -229,7 +229,7 @@ pub(crate) fn new_test_run() -> sp_io::TestExternalities {
         .unwrap();
 
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(101, 100000), (102, 10000), (103, 10)],
+        balances: vec![(ALICE, 100000), (BOB, 10000), (103, 10)],
     }
     .assimilate_storage(&mut t)
     .unwrap();

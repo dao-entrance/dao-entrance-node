@@ -82,6 +82,9 @@ pub struct GuildInfo<AccountId, BlockNumber, AssetId, Status> {
     pub dao_account_id: AccountId,
     /// Purpose of the DAO.
     /// DAO 目标宗旨
+    pub name: Vec<u8>,
+    /// Purpose of the DAO.
+    /// DAO 目标宗旨
     pub desc: Vec<u8>,
     //// meta data
     /// DAO 元数据 图片等内容
@@ -204,6 +207,41 @@ pub mod pallet {
         ValueQuery,
     >;
 
+    /// guild members
+    /// 公会成员
+    #[pallet::storage]
+    #[pallet::getter(fn guild_members)]
+    pub type GuildMembers<T: Config> = StorageDoubleMap<
+        _,
+        Twox64Concat,
+        DaoAssetId,
+        Twox64Concat,
+        u32,
+        BoundedVec<T::AccountId, T::MaxMembers>,
+        ValueQuery,
+    >;
+
+    /// project members
+    /// 项目成员
+    #[pallet::storage]
+    #[pallet::getter(fn project_members)]
+    pub type ProjectMembers<T: Config> = StorageDoubleMap<
+        _,
+        Twox64Concat,
+        DaoAssetId,
+        Twox64Concat,
+        u32,
+        BoundedVec<T::AccountId, T::MaxMembers>,
+        ValueQuery,
+    >;
+
+    /// point
+    /// 成员贡献点
+    #[pallet::storage]
+    #[pallet::getter(fn member_point)]
+    pub type MemberPoint<T: Config> =
+        StorageDoubleMap<_, Twox64Concat, DaoAssetId, Twox64Concat, T::AccountId, u32, ValueQuery>;
+
     /// success event
     /// 成功事件
     #[pallet::event]
@@ -290,6 +328,9 @@ pub mod pallet {
                 },
             );
 
+            // 初始化会员
+            Self::try_add_member(dao_id, creator.clone())?;
+
             // 创建核心团队-coreTeam
             let mut guilds = <Guilds<T>>::get(dao_id);
             guilds
@@ -299,21 +340,19 @@ pub mod pallet {
                         creator: creator.clone(),
                         start_block: now,
                         asset_id,
-                        desc: "coreTeam".as_bytes().to_vec(),
+                        name: "core team".as_bytes().to_vec(),
+                        desc: "".as_bytes().to_vec(),
                         status: Status::Active,
                         dao_account_id: asset_id.into_account(),
                         meta_data: "{}".as_bytes().to_vec(),
                     },
                 )
                 .map_err(|_| Error::<T>::GuildCreateError)?;
+
             <Guilds<T>>::insert(dao_id, &guilds);
 
-            // 初始化核心团队成员
-            let mut members = <Members<T>>::get(dao_id);
-            members
-                .try_insert(0, creator.clone())
-                .map_err(|_| Error::<T>::GuildCreateError)?;
-            <Members<T>>::insert(dao_id, &members);
+            // 获取
+            Self::try_add_guild_member(dao_id, 0, creator.clone())?;
 
             // 记录下一个 DAO id
             let next_id = dao_id.checked_add(1).ok_or(Error::<T>::Overflow)?;
@@ -333,6 +372,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
             asset_id: T::AssetId,
+            name: Vec<u8>,
             desc: Vec<u8>,
             meta_data: Vec<u8>,
         ) -> DispatchResult {
@@ -354,6 +394,7 @@ pub mod pallet {
                         creator: creator.clone(),
                         start_block: now,
                         asset_id,
+                        name,
                         desc: desc,
                         status: Status::Active,
                         dao_account_id: asset_id.into_account(),
@@ -363,6 +404,14 @@ pub mod pallet {
                 .map_err(|_| Error::<T>::GuildCreateError)?;
             <Guilds<T>>::insert(dao_id, &guilds);
 
+            // 更新团队成员
+            let mut members = <GuildMembers<T>>::get(dao_id, 0);
+            members
+                .try_insert(0, creator.clone())
+                .map_err(|_| Error::<T>::GuildCreateError)?;
+
+            // 更新组织
+            <GuildMembers<T>>::insert(dao_id, 0, members);
             Self::deposit_event(Event::Success);
             Ok(())
         }
@@ -382,14 +431,6 @@ pub mod pallet {
         {
             let dao = Daos::<T>::get(dao_id).ok_or(Error::<T>::DaoNotExists)?;
             Ok(dao)
-        }
-
-        /// 获取组织成员信息
-        pub fn try_get_member_list(
-            dao_id: DaoAssetId,
-        ) -> Result<BoundedVec<T::AccountId, T::MaxMembers>, DispatchError> {
-            let ms = Members::<T>::get(dao_id);
-            Ok(ms)
         }
 
         /// 获取公会信息
@@ -430,14 +471,57 @@ pub mod pallet {
         }
 
         /// 添加成员
+        pub fn try_add_guild_member(
+            dao_id: DaoAssetId,
+            guild_id: u32,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let guild = <Guilds<T>>::get(dao_id);
+            ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
+
+            let gindex: u32 = guild_id.into();
+            let mut members = <GuildMembers<T>>::get(dao_id, gindex);
+            let index = members
+                .binary_search(&who)
+                .err()
+                .ok_or(Error::<T>::InVailCall)?;
+
+            members
+                .try_insert(index, who.clone())
+                .map_err(|_| Error::<T>::TooManyMembers)?;
+
+            <GuildMembers<T>>::insert(dao_id, gindex, &members);
+
+            Ok(index)
+        }
+
+        /// 删除成员
+        pub fn try_remove_guild_member(
+            dao_id: DaoAssetId,
+            guild_id: u32,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let guild = <Guilds<T>>::get(dao_id);
+            ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
+
+            let gindex: u32 = guild_id.into();
+            let mut members = <GuildMembers<T>>::get(dao_id, gindex);
+            let index = members
+                .binary_search(&who)
+                .ok()
+                .ok_or(Error::<T>::InVailCall)?;
+
+            members.remove(index);
+            <GuildMembers<T>>::insert(dao_id, gindex, &members);
+
+            Ok(index)
+        }
+
         pub fn try_add_member(
-            origin: OriginFor<T>,
             dao_id: DaoAssetId,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
-            let me = ensure_signed(origin)?;
-            Self::ensrue_dao_root(me, dao_id)?;
-
+            // 初始化成员
             let mut members = <Members<T>>::get(dao_id);
             let index = members
                 .binary_search(&who)
@@ -445,31 +529,25 @@ pub mod pallet {
                 .ok_or(Error::<T>::InVailCall)?;
             members
                 .try_insert(index, who.clone())
-                .map_err(|_| Error::<T>::TooManyMembers)?;
+                .map_err(|_| Error::<T>::GuildCreateError)?;
 
             <Members<T>>::insert(dao_id, &members);
-
             Ok(index)
         }
 
         /// 删除成员
         pub fn try_remove_member(
-            origin: OriginFor<T>,
             dao_id: DaoAssetId,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
-            let me = ensure_signed(origin)?;
-            Self::ensrue_dao_root(me, dao_id)?;
-
             let mut members = <Members<T>>::get(dao_id);
             let index = members
                 .binary_search(&who)
                 .ok()
                 .ok_or(Error::<T>::InVailCall)?;
+
             members.remove(index);
-
             <Members<T>>::insert(dao_id, &members);
-
             Ok(index)
         }
     }

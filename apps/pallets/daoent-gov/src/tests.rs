@@ -11,6 +11,7 @@ use daoent_primitives::types::Nft;
 pub const ALICE: u64 = 1;
 pub const BOB: u64 = 2;
 pub const DAO_ID: u64 = 1;
+pub const P_ID: u32 = 1;
 
 pub fn create_dao() {
     daoent_dao::Pallet::<Test>::create_dao(
@@ -25,7 +26,7 @@ pub fn create_dao() {
 pub fn propose() {
     create_dao();
     frame_system::Pallet::<Test>::set_block_number(10000);
-    assert!(Pallet::<Test>::start_referendum(RuntimeOrigin::signed(ALICE), 0u64).is_err());
+    assert!(Pallet::<Test>::start_referendum(RuntimeOrigin::signed(ALICE), DAO_ID, P_ID).is_err());
     frame_system::Pallet::<Test>::set_block_number(0);
     let proposal = RuntimeCall::DAOGov(Call::set_min_vote_weight_for_every_call {
         dao_id: DAO_ID,
@@ -35,6 +36,7 @@ pub fn propose() {
     assert_ok!(Pallet::<Test>::create_propose(
         RuntimeOrigin::signed(ALICE),
         DAO_ID,
+        MemmberData::GLOBAL,
         Box::new(proposal),
         0u64
     ));
@@ -51,11 +53,12 @@ pub fn second() {
 
 pub fn start_referendum() {
     second();
-    assert!(Pallet::<Test>::start_referendum(RuntimeOrigin::signed(ALICE), DAO_ID).is_err());
+    assert!(Pallet::<Test>::start_referendum(RuntimeOrigin::signed(ALICE), DAO_ID, P_ID).is_err());
     frame_system::Pallet::<Test>::set_block_number(10000);
     assert_ok!(Pallet::<Test>::start_referendum(
         RuntimeOrigin::signed(ALICE),
-        DAO_ID
+        DAO_ID,
+        P_ID
     ));
 }
 
@@ -175,6 +178,6 @@ pub fn run_proposal_should_work() {
 pub fn unlock_should_work() {
     new_test_run().execute_with(|| {
         run();
-        assert_ok!(Pallet::<Test>::unlock(RuntimeOrigin::signed(ALICE)));
+        assert_ok!(Pallet::<Test>::unlock(RuntimeOrigin::signed(ALICE), DAO_ID));
     });
 }

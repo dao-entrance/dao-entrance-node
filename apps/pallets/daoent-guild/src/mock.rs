@@ -1,16 +1,14 @@
 #![allow(dead_code)]
 use super::*;
 
-use crate as daoent_project;
-use codec::MaxEncodedLen;
+use crate as daoent_guild;
 use daoent_gov::traits::Pledge;
 use frame_support::{construct_runtime, parameter_types, traits::Contains, PalletId};
 use orml_traits::parameter_type_with_key;
-use sp_core::{ConstU32, H256};
+use sp_core::H256;
 use sp_runtime::{
     testing::Header,
     traits::{IdentityLookup, Zero},
-    DispatchError,
 };
 
 use daoent_assets::{self as daoent_assets, asset_adaper_in_pallet::BasicCurrencyAdapter};
@@ -42,7 +40,7 @@ construct_runtime!(
         DAO: daoent_dao::{ Pallet, Call, Event<T>, Storage },
         DAOAsset: daoent_assets::{ Pallet, Call, Event<T>, Storage },
         DAOSudo: daoent_sudo::{ Pallet, Call, Event<T>, Storage },
-        DAOGuild: daoent_project::{ Pallet, Call, Event<T>, Storage },
+        DAOGuild: daoent_guild::{ Pallet, Call, Event<T>, Storage },
         DAOGov: daoent_gov::{ Pallet, Call, Event<T>, Storage },
     }
 );
@@ -74,7 +72,7 @@ impl daoent_gov::Config for Test {
     type WeightInfo = ();
 }
 
-impl daoent_project::Config for Test {
+impl daoent_guild::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
 }
@@ -225,7 +223,7 @@ impl TryFrom<RuntimeCall> for CallId {
         match call {
             // dao
             RuntimeCall::DAOGuild(func) => match func {
-                daoent_project::Call::project_join_request { .. } => Ok(401 as CallId),
+                daoent_guild::Call::guild_join_request { .. } => Ok(401 as CallId),
                 _ => Err(()),
             },
             _ => Err(()),

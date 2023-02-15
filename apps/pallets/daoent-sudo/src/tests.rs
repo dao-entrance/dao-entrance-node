@@ -44,8 +44,9 @@ pub fn sudo_should_work() {
         let proposal = RuntimeCall::DAO(daoent_dao::Call::create_guild {
             dao_id: DAO_ID,
             asset_id: Nft(0u64),
-            desc: vec![1; 4],
-            meta_data: vec![1; 4],
+            name: "name".as_bytes().to_vec(),
+            desc: "desc".as_bytes().to_vec(),
+            meta_data: "{}".as_bytes().to_vec(),
         });
 
         assert_ok!(crate::Pallet::<Test>::sudo(

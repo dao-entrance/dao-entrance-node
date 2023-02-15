@@ -1,5 +1,5 @@
 [package]
-name = "daoent-project"
+name = "daoent-guild"
 version = "1.0.0"
 authors = ["dao-entrance"]
 edition = "2021"

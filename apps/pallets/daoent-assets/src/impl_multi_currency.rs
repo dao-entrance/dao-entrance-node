@@ -54,6 +54,12 @@ impl<T: Config> MultiCurrency<T::AccountId> for Pallet<T> {
         to: &T::AccountId,
         amount: Self::Balance,
     ) -> DispatchResult {
+        #[cfg(test)]
+        println!(
+            "\nTransfer =>> Asset_id:{:?} ||| Free_amount: {:?}",
+            asset_id, amount
+        );
+
         if amount.is_zero() || from == to {
             return Ok(());
         }

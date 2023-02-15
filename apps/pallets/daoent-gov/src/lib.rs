@@ -2,21 +2,22 @@
 #![allow(clippy::type_complexity)]
 
 use codec::{Decode, Encode};
-use frame_support::dispatch::{DispatchResult as DResult, UnfilteredDispatchable};
 use frame_support::{
-    traits::{Currency, Defensive, ReservableCurrency},
+    dispatch::{DispatchResult as DResult, UnfilteredDispatchable},
     RuntimeDebug,
 };
 use scale_info::TypeInfo;
-use sp_runtime::traits::{Saturating, Zero};
 use sp_runtime::{
-    traits::{BlockNumberProvider, CheckedAdd, CheckedMul, Hash},
+    traits::{BlockNumberProvider, CheckedAdd, CheckedMul, Hash, Saturating},
     DispatchError,
 };
 use sp_std::boxed::Box;
 use sp_std::result;
 use traits::*;
 
+use orml_traits::MultiCurrency;
+
+use daoent_assets;
 use daoent_dao::{self};
 use daoent_primitives::traits::BaseCallFilter;
 use daoent_primitives::types::DaoAssetId;
@@ -38,6 +39,18 @@ mod tests;
 mod benchmarking;
 pub mod traits;
 pub mod weights;
+
+/// vote yes or no
+/// 投票
+#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
+pub enum MemmberData<ID> {
+    /// 全局.
+    GLOBAL,
+    /// 公会.
+    GUILD(ID),
+    /// 项目.
+    PROJECT(ID),
+}
 
 /// Voting Statistics.
 /// 投票数据统计
@@ -124,14 +137,16 @@ pub mod pallet {
     use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
     use frame_system::pallet_prelude::*;
 
-    pub type BalanceOf<T> =
-        <<T as Config>::Asset as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+    pub(crate) type BalanceOf<T> = <<T as daoent_assets::Config>::MultiAsset as MultiCurrency<
+        <T as frame_system::Config>::AccountId,
+    >>::Balance;
 
     /// Configure the pallet by specifying the parameters and types on which it depends.
     #[pallet::config]
-    pub trait Config: frame_system::Config + daoent_dao::Config {
+    pub trait Config: frame_system::Config + daoent_assets::Config + daoent_dao::Config {
         /// Because this pallet emits events, it depends on the runtime's definition of an event.
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
         /// What to stake when voting in a referendum.
         type Pledge: Clone
             + Default
@@ -146,6 +161,7 @@ pub mod pallet {
                 Self::BlockNumber,
                 DispatchError,
             >;
+
         /// The number of times the vote is magnified.
         type Conviction: Clone
             + Default
@@ -153,8 +169,7 @@ pub mod pallet {
             + Parameter
             + ConvertInto<Self::BlockNumber>
             + ConvertInto<BalanceOf<Self>>;
-        /// Operations related to native asset.
-        type Asset: Currency<Self::AccountId> + ReservableCurrency<Self::AccountId>;
+
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;
     }
@@ -242,6 +257,7 @@ pub mod pallet {
             PropIndex,
             T::Hash,
             <T as daoent_dao::Config>::RuntimeCall,
+            MemmberData<u32>,
             T::AccountId,
         )>,
         ValueQuery,
@@ -323,7 +339,7 @@ pub mod pallet {
         /// initiate a proposal.
         Proposed(DaoAssetId, T::Hash),
         /// Others support initiating proposals.
-        Second(DaoAssetId, BalanceOf<T>),
+        Recreate(DaoAssetId, BalanceOf<T>),
         /// Open a referendum.
         StartTable(DaoAssetId, ReferendumIndex),
         /// Vote for the referendum.
@@ -402,6 +418,7 @@ pub mod pallet {
         VoteWeightTooLow,
         ///
         PledgeNotEnough,
+        Gov403,
     }
 
     #[pallet::call]
@@ -413,40 +430,55 @@ pub mod pallet {
         pub fn create_propose(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
+            member_data: MemmberData<u32>,
             proposal: Box<<T as daoent_dao::Config>::RuntimeCall>,
             #[pallet::compact] value: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
+            Self::check_auth_for_proposal(dao_id, who.clone())?;
+
+            // 确认提案为当前资产支持的 调用
             ensure!(
                 daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?.contains(*proposal.clone()),
                 daoent_dao::Error::<T>::InVailCall
             );
+
+            // 判断最小押金
             ensure!(
                 value >= MinimumDeposit::<T>::get(dao_id),
                 Error::<T>::DepositTooLow
             );
 
             let proposal_hash = T::Hashing::hash_of(&proposal);
-            let index = Self::public_prop_count(dao_id);
+            let proposal_index = Self::public_prop_count(dao_id);
             let real_prop_count = PublicProps::<T>::decode_len(dao_id).unwrap_or(0) as u32;
             let max_proposals = MaxPublicProps::<T>::get(dao_id);
+
+            // 确定提案数是否超过了最大提案
             ensure!(
                 real_prop_count < max_proposals,
                 Error::<T>::TooManyProposals
             );
 
-            T::Asset::reserve(&who, value)?;
+            daoent_assets::Pallet::<T>::reserve(dao_id, who.clone(), value)?;
 
-            PublicPropCount::<T>::insert(dao_id, index + 1);
-            <DepositOf<T>>::insert(dao_id, index, (&[&who][..], value));
+            // 更新提案数量
+            PublicPropCount::<T>::insert(dao_id, proposal_index + 1);
 
-            <PublicProps<T>>::append(dao_id, (index, proposal_hash, *proposal, who));
+            // 添加提案抵押
+            <DepositOf<T>>::insert(dao_id, proposal_index, (&[&who][..], value));
+
+            // 添加提案
+            <PublicProps<T>>::append(
+                dao_id,
+                (proposal_index, proposal_hash, *proposal, member_data, who),
+            );
 
             Self::deposit_event(Event::<T>::Proposed(dao_id, proposal_hash));
             Ok(().into())
         }
 
-        /// Others support initiating proposals.
+        /// 重新提交提案
         #[pallet::call_index(002)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::second())]
         pub fn recreate(
@@ -460,9 +492,9 @@ pub mod pallet {
                 Self::deposit_of(dao_id, proposal_index).ok_or(Error::<T>::ProposalMissing)?;
 
             let deposit_amount = deposit.1;
-            T::Asset::reserve(&who, deposit_amount)?;
-            deposit.0.push(who.clone());
+            daoent_assets::Pallet::<T>::reserve(dao_id, who.clone(), deposit_amount)?;
 
+            deposit.0.push(who.clone());
             <DepositOf<T>>::insert(dao_id, proposal_index, deposit);
 
             let unreserved_block = Self::now()
@@ -470,7 +502,7 @@ pub mod pallet {
                 .ok_or(Error::<T>::Overflow)?;
             ReserveOf::<T>::append(who, (deposit_amount, unreserved_block));
 
-            Self::deposit_event(Event::<T>::Second(dao_id, deposit_amount));
+            Self::deposit_event(Event::<T>::Recreate(dao_id, deposit_amount));
             Ok(().into())
         }
 
@@ -481,6 +513,7 @@ pub mod pallet {
         pub fn start_referendum(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
+            propose_index: u32,
         ) -> DispatchResultWithPostInfo {
             let _ = ensure_signed(origin)?;
             let tag = LaunchTag::<T>::get(dao_id);
@@ -494,31 +527,29 @@ pub mod pallet {
                 Error::<T>::NotTableTime
             );
 
-            let mut index: Option<ReferendumIndex> = None;
-
+            // 获取提案
             let mut public_props = Self::public_props(dao_id);
-            if let Some((winner_index, _)) = public_props.iter().enumerate().max_by_key(|x| {
-                Self::backing_for(dao_id, (x.1).0).defensive_unwrap_or_else(Zero::zero)
-            }) {
-                let now = Self::now();
-                let (prop_index, _, proposal, _) = public_props.swap_remove(winner_index);
-                <PublicProps<T>>::insert(dao_id, public_props);
+            let (prop_index, _, proposal, _, _) =
+                public_props.swap_remove(propose_index.try_into().unwrap());
+            <PublicProps<T>>::insert(dao_id, public_props);
 
-                if <DepositOf<T>>::take(dao_id, prop_index).is_some() {
-                    index = Some(Self::inject_referendum(
-                        dao_id,
-                        now.saturating_add(VotingPeriod::<T>::get(dao_id)),
-                        proposal,
-                        EnactmentPeriod::<T>::get(dao_id),
-                    ));
-                }
+            // 获取抵押
+            let mut referendum_index: Option<ReferendumIndex> = None;
+            let now = Self::now();
+            if <DepositOf<T>>::take(dao_id, prop_index).is_some() {
+                referendum_index = Some(Self::inject_referendum(
+                    dao_id,
+                    proposal,
+                    now.saturating_add(VotingPeriod::<T>::get(dao_id)),
+                    EnactmentPeriod::<T>::get(dao_id),
+                ));
             }
 
-            if index.is_none() {
+            if referendum_index.is_none() {
                 Err(Error::<T>::NoneWaiting)?
             }
 
-            Self::deposit_event(Event::<T>::StartTable(dao_id, index.unwrap()));
+            Self::deposit_event(Event::<T>::StartTable(dao_id, referendum_index.unwrap()));
 
             Ok(().into())
         }
@@ -530,7 +561,7 @@ pub mod pallet {
         pub fn vote_for_referendum(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
-            index: ReferendumIndex,
+            referendum_index: ReferendumIndex,
             pledge: T::Pledge,
             conviction: T::Conviction,
             opinion: Opinion,
@@ -541,7 +572,7 @@ pub mod pallet {
 
             ReferendumInfoOf::<T>::try_mutate_exists(
                 dao_id,
-                index,
+                referendum_index,
                 |h| -> result::Result<(), DispatchError> {
                     let mut info = h.take().ok_or(Error::<T>::ReferendumNotExists)?;
                     if let ReferendumInfo::Ongoing(ref mut x) = info {
@@ -549,6 +580,7 @@ pub mod pallet {
                             let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
                             let vote_result = pledge.try_vote(&who, &dao_id, &conviction)?;
                             vote_weight = vote_result.0;
+
                             let duration = vote_result.1;
                             match opinion {
                                 Opinion::NO => {
@@ -558,6 +590,7 @@ pub mod pallet {
                                     x.tally.yes += vote_weight;
                                 }
                             };
+
                             VotesOf::<T>::append(
                                 &who,
                                 VoteInfo {
@@ -567,7 +600,7 @@ pub mod pallet {
                                     opinion,
                                     vote_weight,
                                     unlock_block: now + duration,
-                                    referendum_index: index,
+                                    referendum_index: referendum_index,
                                 },
                             );
                         } else {
@@ -581,7 +614,7 @@ pub mod pallet {
                 },
             )?;
 
-            Self::deposit_event(Event::<T>::Vote(dao_id, index, pledge));
+            Self::deposit_event(Event::<T>::Vote(dao_id, referendum_index, pledge));
             Ok(().into())
         }
 
@@ -652,25 +685,25 @@ pub mod pallet {
             let info =
                 ReferendumInfoOf::<T>::get(dao_id, index).ok_or(Error::<T>::ReferendumNotExists)?;
             match info {
-                ReferendumInfo::Ongoing(x) => {
-                    if x.end > now {
+                ReferendumInfo::Ongoing(state) => {
+                    if state.end > now {
                         return Err(Error::<T>::VoteNotEnd)?;
-                    } else if x.end.saturating_add(x.delay) > now {
+                    } else if state.end.saturating_add(state.delay) > now {
                         return Err(Error::<T>::InDelayTime)?;
                     } else {
                         {
                             let call_id: T::CallId =
                                 TryFrom::<<T as daoent_dao::Config>::RuntimeCall>::try_from(
-                                    x.proposal.clone(),
+                                    state.proposal.clone(),
                                 )
                                 .unwrap_or_default();
 
-                            if x.tally.yes.saturating_add(x.tally.no)
+                            if state.tally.yes.saturating_add(state.tally.no)
                                 >= MinVoteWeightOf::<T>::get(dao_id, call_id)
                             {
-                                if x.tally.yes >= x.tally.no {
+                                if state.tally.yes >= state.tally.no {
                                     approved = true;
-                                    let res = x.proposal.dispatch_bypass_filter(
+                                    let res = state.proposal.dispatch_bypass_filter(
                                         frame_system::RawOrigin::Signed(
                                             daoent_dao::Pallet::<T>::try_get_dao_account_id(
                                                 dao_id,
@@ -710,7 +743,7 @@ pub mod pallet {
         /// Unlock
         #[pallet::call_index(007)]
         #[pallet::weight(<T as pallet::Config>::WeightInfo::unlock())]
-        pub fn unlock(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+        pub fn unlock(origin: OriginFor<T>, dao_id: DaoAssetId) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let now = Self::now();
             //
@@ -721,7 +754,7 @@ pub mod pallet {
                     if h.1 > now {
                         true
                     } else {
-                        T::Asset::unreserve(&who, h.0);
+                        daoent_assets::Pallet::<T>::unreserve(dao_id, who.clone(), h.0).unwrap();
                         total += h.0;
                         false
                     }
@@ -870,6 +903,50 @@ pub mod pallet {
             Ok(().into())
         }
     }
+
+    impl<T: Config> Pallet<T> {
+        /// 获取当前投票的作用范围
+        pub fn try_get_members(
+            dao_id: DaoAssetId,
+            member_data: MemmberData<u32>,
+        ) -> result::Result<BoundedVec<T::AccountId, T::MaxMembers>, DispatchError> {
+            let ms: BoundedVec<T::AccountId, T::MaxMembers>;
+            match member_data {
+                MemmberData::GLOBAL => ms = <daoent_dao::Members<T>>::get(dao_id),
+                MemmberData::GUILD(v) => ms = <daoent_dao::GuildMembers<T>>::get(dao_id, v),
+                MemmberData::PROJECT(v) => ms = <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
+            }
+            Ok(ms)
+        }
+
+        /// 获取用户是否有 提案 的权利
+        pub fn check_auth_for_proposal(
+            dao_id: DaoAssetId,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let ms = <daoent_dao::Members<T>>::get(dao_id);
+            let index = ms.binary_search(&who).ok().ok_or(Error::<T>::Gov403)?;
+
+            Ok(index)
+        }
+
+        /// 获取用户是否有 提案//投票 的权利
+        pub fn check_auth_for_vote(
+            dao_id: DaoAssetId,
+            member_data: MemmberData<u32>,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let ms: BoundedVec<T::AccountId, T::MaxMembers>;
+            match member_data {
+                MemmberData::GLOBAL => ms = <daoent_dao::Members<T>>::get(dao_id),
+                MemmberData::GUILD(v) => ms = <daoent_dao::GuildMembers<T>>::get(dao_id, v),
+                MemmberData::PROJECT(v) => ms = <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
+            }
+            let index = ms.binary_search(&who).ok().ok_or(Error::<T>::Gov403)?;
+
+            Ok(index)
+        }
+    }
 }
 
 impl<T: Config> Pallet<T> {
@@ -879,8 +956,8 @@ impl<T: Config> Pallet<T> {
 
     fn inject_referendum(
         dao_id: DaoAssetId,
-        end: T::BlockNumber,
         proposal: <T as daoent_dao::Config>::RuntimeCall,
+        end: T::BlockNumber,
         delay: T::BlockNumber,
     ) -> ReferendumIndex {
         let ref_index = Self::referendum_count(dao_id);

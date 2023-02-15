@@ -1147,7 +1147,6 @@ name = "daoent-assets"
 version = "1.0.0"
 dependencies = [
  "daoent-dao",
- "daoent-gov",
  "daoent-primitives",
  "daoent-sudo",
  "frame-benchmarking",
@@ -1186,15 +1185,42 @@ dependencies = [
 name = "daoent-gov"
 version = "1.0.0"
 dependencies = [
+ "daoent-assets",
  "daoent-dao",
  "daoent-primitives",
  "daoent-sudo",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "daoent-guild"
+version = "1.0.0"
+dependencies = [
+ "daoent-assets",
+ "daoent-dao",
+ "daoent-gov",
+ "daoent-primitives",
+ "daoent-sudo",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
  "sp-core",
  "sp-io",
  "sp-runtime",
@@ -1216,6 +1242,7 @@ dependencies = [
 name = "daoent-project"
 version = "1.0.0"
 dependencies = [
+ "daoent-assets",
  "daoent-dao",
  "daoent-gov",
  "daoent-primitives",

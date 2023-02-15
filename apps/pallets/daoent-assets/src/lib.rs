@@ -38,9 +38,9 @@ use sp_std::{
 };
 
 pub mod asset_adaper_in_pallet;
-pub mod asset_in_pallet;
-pub mod impl_currency_handler;
-pub mod impl_multi_currency;
+mod asset_in_pallet;
+mod impl_currency_handler;
+mod impl_multi_currency;
 
 pub use pallet::*;
 
@@ -50,10 +50,10 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-pub mod weights;
+mod weights;
 pub use weights::WeightInfo;
 
-pub mod traits;
+mod traits;
 use traits::CurrenciesHandler;
 
 pub const NATIVE_ASSET_ID: DaoAssetId = 0;
@@ -143,9 +143,9 @@ pub mod pallet {
         DaoExists,
         CexTransferClosed,
         AssetIdExisted,
-        BadLocation,
-        MultiLocationExisted,
-        CrossTransferNotOpen,
+        DepositTooLow,
+        DepositNotZero,
+        DepositRateError,
     }
 
     #[pallet::event]
@@ -209,9 +209,18 @@ pub mod pallet {
                 daoent_dao::Daos::<T>::contains_key(asset_id),
                 Error::<T>::AssetNotExists
             );
-            let user = ensure_signed(origin)?;
 
+            let user = ensure_signed(origin)?;
             Self::do_create(user.clone(), asset_id, metadata, amount, false)?;
+
+            // 将资金转入资金池B池
+            // <Self as MultiCurrency<T::AccountId>>::transfer(
+            <Self as MultiCurrency<T::AccountId>>::transfer(
+                NATIVE_ASSET_ID,
+                &user,
+                &Self::dao_asset(asset_id),
+                amount,
+            )?;
 
             Ok(().into())
         }
@@ -303,7 +312,7 @@ pub mod pallet {
                 Error::<T>::MetadataNotExists
             );
 
-            <T as pallet::Config>::MultiAsset::withdraw(asset_id, &user, amount)?;
+            <Self as MultiCurrency<T::AccountId>>::withdraw(asset_id, &user, amount)?;
             Self::deposit_event(Event::Burn(user, asset_id, amount));
             Ok(().into())
         }
@@ -342,57 +351,67 @@ pub mod pallet {
             Ok(().into())
         }
 
+        /// 成为会员
         #[pallet::call_index(007)]
         #[pallet::weight(1500_000_000)]
         pub fn join_request(
             origin: OriginFor<T>,
-            asset_id: DaoAssetId,
-            existenial_deposit: BalanceOf<T>,
+            dao_id: DaoAssetId,
+            share_expect: u32,
+            #[pallet::compact] existenial_deposit: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            daoent_dao::Pallet::<T>::ensrue_dao_root(who, asset_id)?;
 
-            ExistentialDeposits::<T>::insert(asset_id, existenial_deposit);
-            Self::deposit_event(Event::SetExistenialDepposit {
-                asset_id,
+            // 获取最小的账户
+            let min_existenial_deposit: BalanceOf<T> = ExistentialDeposits::<T>::get(dao_id);
+            ensure!(
+                existenial_deposit >= min_existenial_deposit,
+                Error::<T>::DepositTooLow
+            );
+
+            // 最低押金必须大于0
+            let zero: BalanceOf<T> = 0u32.into();
+            ensure!(existenial_deposit >= zero, Error::<T>::DepositNotZero);
+
+            // 获取链上资金池
+            let pool_b = Self::dao_asset(dao_id);
+            let pool_b_total =
+                <Self as MultiCurrency<T::AccountId>>::total_balance(NATIVE_ASSET_ID, &pool_b);
+            ensure!(pool_b_total > zero, Error::<T>::DepositTooLow);
+
+            // 判断用户期望share是否符合当前汇率
+            let share_expect_b: BalanceOf<T> = share_expect.into();
+            ensure!(
+                <Self as MultiCurrency<T::AccountId>>::total_issuance(dao_id) / pool_b_total
+                    >= share_expect_b / existenial_deposit,
+                Error::<T>::DepositRateError
+            );
+
+            // 将资金转入资金池B池
+            <Self as MultiCurrency<T::AccountId>>::transfer(
+                NATIVE_ASSET_ID,
+                &who,
+                &pool_b,
                 existenial_deposit,
-            });
+            )?;
+
+            // 设置为会员，并且为用户添加 share
+            daoent_dao::Pallet::<T>::try_add_member(dao_id, who.clone()).unwrap();
+            <Self as MultiCurrency<T::AccountId>>::deposit(dao_id, &who, share_expect.into())?;
 
             Ok(().into())
-        }
-
-        /// 添加成员
-        #[pallet::call_index(008)]
-        #[pallet::weight(50_000_000)]
-        pub fn add_member(
-            origin: OriginFor<T>,
-            dao_id: DaoAssetId,
-            who: T::AccountId,
-        ) -> DispatchResult {
-            daoent_dao::Pallet::<T>::try_add_member(origin, dao_id, who)?;
-
-            // Self::deposit_event(Event::Success);
-            Ok(())
-        }
-
-        /// 删除成员
-        #[pallet::call_index(009)]
-        #[pallet::weight(50_000_000)]
-        pub fn remove_member(
-            origin: OriginFor<T>,
-            dao_id: DaoAssetId,
-            who: T::AccountId,
-        ) -> DispatchResult {
-            daoent_dao::Pallet::<T>::try_remove_member(origin, dao_id, who)?;
-
-            Ok(())
         }
     }
 
     impl<T: Config> Pallet<T> {
         /// 获取DAO账户
-        pub fn account_id(dao_id: DaoAssetId) -> T::AccountId {
+        pub fn dao_asset(dao_id: DaoAssetId) -> T::AccountId {
             T::PalletId::get().into_sub_account_truncating(dao_id)
+        }
+
+        /// 获取DAO账户
+        pub fn dao_asset_pending(dao_id: DaoAssetId) -> T::AccountId {
+            T::PalletId::get().into_sub_account_truncating(dao_id.to_string() + "PENDING")
         }
 
         /// 获取DAO账户
@@ -408,6 +427,36 @@ pub mod pallet {
             let balance = <Self as MultiCurrency<T::AccountId>>::total_balance(asset_id, &who);
 
             Ok(balance)
+        }
+
+        /// 获取DAO账户
+        pub fn reserve(
+            asset_id: DaoAssetId,
+            who: T::AccountId,
+            value: BalanceOf<T>,
+        ) -> result::Result<(), DispatchError> {
+            ensure!(
+                Self::is_exists_metadata(asset_id),
+                Error::<T>::MetadataNotExists
+            );
+
+            <Self as MultiReservableCurrency<T::AccountId>>::reserve(asset_id, &who, value)?;
+            Ok(())
+        }
+
+        /// 获取DAO账户
+        pub fn unreserve(
+            asset_id: DaoAssetId,
+            who: T::AccountId,
+            value: BalanceOf<T>,
+        ) -> result::Result<(), DispatchError> {
+            ensure!(
+                Self::is_exists_metadata(asset_id),
+                Error::<T>::MetadataNotExists
+            );
+
+            <Self as MultiReservableCurrency<T::AccountId>>::unreserve(asset_id, &who, value);
+            Ok(())
         }
     }
 }

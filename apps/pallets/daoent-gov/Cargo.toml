@@ -20,9 +20,13 @@ sp-runtime = { version = "7.0.0", default-features = false, git = "https://githu
 sp-std = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.36', default-features = false }
 pallet-balances = { git = 'https://github.com/paritytech/substrate', branch = 'polkadot-v0.9.36', default-features = false }
 
+orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "polkadot-v0.9.36"}
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "polkadot-v0.9.36"}
+
 daoent-primitives = { path = "../../primitives", package = "daoent-primitives", default-features = false}
 daoent-dao = { path = "../daoent-dao", package = "daoent-dao", default-features = false}
 daoent-sudo = { path = "../daoent-sudo", package = "daoent-sudo", default-features = false}
+daoent-assets = { path = "../daoent-assets", package = "daoent-assets", default-features = false}
 
 [dev-dependencies]
 sp-core = { version = "7.0.0", default-features = false, git = "https://github.com/paritytech/substrate.git", "branch" = "polkadot-v0.9.36" }
@@ -41,6 +45,7 @@ std = [
 	"daoent-primitives/std",
 	"daoent-dao/std",
 	"daoent-sudo/std",
+	"daoent-assets/std",
 ]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 try-runtime = ["frame-support/try-runtime"]
