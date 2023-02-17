@@ -11,7 +11,6 @@ use frame_support::{
         LockableCurrency as PalletLockableCurrency, ReservableCurrency as PalletReservableCurrency,
         WithdrawReasons,
     },
-    PalletId,
 };
 use frame_system::{ensure_signed, pallet_prelude::*};
 use orml_traits::{
@@ -23,7 +22,7 @@ use orml_traits::{
 use scale_info::TypeInfo;
 
 use daoent_dao::{self as dao};
-use daoent_primitives::types::{DaoAssetId, ProjectId};
+use daoent_primitives::types::DaoAssetId;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::{
@@ -79,22 +78,9 @@ pub struct DaoAssetInfo<AccountId, DaoAssetMeta> {
     pub metadata: Option<DaoAssetMeta>,
 }
 
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, TypeInfo)]
-pub struct DaoAssetAccount {
-    pub dao_id: DaoAssetId,
-    pub t: u8,
-}
-
-#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, TypeInfo)]
-pub struct DaoProjectAccount {
-    pub dao_id: DaoAssetId,
-    pub project_id: ProjectId,
-}
-
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
-    use sp_runtime::traits::AccountIdConversion;
 
     pub(crate) type BalanceOf<T> = <<T as Config>::MultiAsset as MultiCurrency<
         <T as frame_system::Config>::AccountId,
@@ -107,11 +93,6 @@ pub mod pallet {
     #[pallet::config]
     pub trait Config: frame_system::Config + dao::Config {
         type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
-        /// pallet id
-        /// 模块id
-        #[pallet::constant]
-        type PalletId: Get<PalletId>;
 
         /// dao asset
         /// 组织内部资产
@@ -230,14 +211,14 @@ pub mod pallet {
             <Self as MultiCurrency<T::AccountId>>::transfer(
                 NATIVE_ASSET_ID,
                 &user,
-                &Self::dao_asset(asset_id),
+                &daoent_dao::Pallet::<T>::dao_asset(asset_id),
                 amount,
             )?;
 
             // 初始化账户基本资产
             <Self as MultiCurrency<T::AccountId>>::deposit(
                 asset_id,
-                &Self::dao_asset(asset_id),
+                &daoent_dao::Pallet::<T>::dao_asset(asset_id),
                 init_dao_asset,
             )?;
 
@@ -393,7 +374,7 @@ pub mod pallet {
             ensure!(existenial_deposit >= zero, Error::<T>::DepositNotZero);
 
             // 获取链上资金池
-            let pool_b = Self::dao_asset(dao_id);
+            let pool_b = daoent_dao::Pallet::<T>::dao_asset(dao_id);
             let pool_b_total =
                 <Self as MultiCurrency<T::AccountId>>::total_balance(NATIVE_ASSET_ID, &pool_b);
             ensure!(pool_b_total > zero, Error::<T>::DepositTooLow);
@@ -423,24 +404,6 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
-        /// 获取DAO账户
-        pub fn dao_asset(dao_id: DaoAssetId) -> T::AccountId {
-            T::PalletId::get().into_sub_account_truncating(dao_id)
-        }
-
-        /// 获取DAO账户
-        pub fn dao_asset_pending(dao_id: DaoAssetId) -> T::AccountId {
-            T::PalletId::get().into_sub_account_truncating(DaoAssetAccount { dao_id, t: 2 })
-        }
-
-        /// 获取DAO项目账户
-        pub fn dao_project(dao_id: DaoAssetId, p_id: ProjectId) -> T::AccountId {
-            T::PalletId::get().into_sub_account_truncating(DaoProjectAccount {
-                dao_id,
-                project_id: p_id,
-            })
-        }
-
         /// 获取账户金额
         pub fn get_balance(
             asset_id: DaoAssetId,

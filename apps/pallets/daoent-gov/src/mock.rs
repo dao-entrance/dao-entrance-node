@@ -5,10 +5,7 @@ use crate as daoent_gov;
 use crate::PledgeTrait;
 use codec::{Decode, Encode, MaxEncodedLen};
 use daoent_assets::asset_adaper_in_pallet::BasicCurrencyAdapter;
-use daoent_primitives::{
-    traits::BaseCallFilter,
-    types::{DaoAssetId, Nft},
-};
+use daoent_primitives::types::DaoAssetId;
 use frame_support::{
     parameter_types,
     traits::{ConstU16, ConstU32, ConstU64, Contains},
@@ -124,11 +121,6 @@ impl TryFrom<RuntimeCall> for u64 {
         }
     }
 }
-impl BaseCallFilter<RuntimeCall> for Nft<u64> {
-    fn contains(&self, call: RuntimeCall) -> bool {
-        true
-    }
-}
 
 impl pallet_balances::Config for Test {
     type Balance = u64;
@@ -143,10 +135,10 @@ impl pallet_balances::Config for Test {
 }
 
 impl daoent_dao::Config for Test {
+    type PalletId = DaoPalletId;
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
     type CallId = u64;
-    type AssetId = Nft<u64>;
     type AfterCreate = ();
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;
@@ -160,7 +152,6 @@ parameter_types! {
 impl daoent_assets::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
-    type PalletId = DaoPalletId;
     type MaxCreatableId = MaxCreatableId;
     type MultiAsset = Tokens;
     type NativeAsset = BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;

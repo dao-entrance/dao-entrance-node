@@ -1,5 +1,4 @@
 use crate as daoent_dao;
-use daoent_primitives::{traits::BaseCallFilter, types::Nft};
 use frame_support::{
     parameter_types,
     traits::{ConstU16, ConstU32, ConstU64},
@@ -65,12 +64,6 @@ impl TryFrom<RuntimeCall> for u64 {
     }
 }
 
-impl BaseCallFilter<RuntimeCall> for Nft<u64> {
-    fn contains(&self, _call: RuntimeCall) -> bool {
-        false
-    }
-}
-
 parameter_types! {
     pub const DaoPalletId: PalletId = PalletId(*b"ent--dao");
 }
@@ -78,8 +71,8 @@ parameter_types! {
 impl daoent_dao::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
+    type PalletId = DaoPalletId;
     type CallId = u64;
-    type AssetId = Nft<u64>;
     type AfterCreate = ();
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;

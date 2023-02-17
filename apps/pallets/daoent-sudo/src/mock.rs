@@ -16,8 +16,6 @@ use sp_runtime::{
 };
 use sp_std::result::Result;
 
-use daoent_primitives::{traits::BaseCallFilter, types::Nft};
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 pub type Block = frame_system::mocking::MockBlock<Test>;
 
@@ -74,17 +72,11 @@ impl TryFrom<RuntimeCall> for u64 {
     }
 }
 
-impl BaseCallFilter<RuntimeCall> for Nft<u64> {
-    fn contains(&self, call: RuntimeCall) -> bool {
-        true
-    }
-}
-
 impl daoent_dao::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
     type CallId = u64;
-    type AssetId = Nft<u64>;
+    type PalletId = DaoPalletId;
     type AfterCreate = ();
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;

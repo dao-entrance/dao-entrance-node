@@ -6,21 +6,14 @@ use frame_support::assert_ok;
 use mock::{RuntimeCall, RuntimeOrigin, *};
 use sp_runtime::traits::BlakeTwo256;
 
-use daoent_primitives::types::Nft;
-
 pub const ALICE: u64 = 1;
 pub const BOB: u64 = 2;
 pub const DAO_ID: u64 = 1;
 pub const P_ID: u32 = 1;
 
 pub fn create_dao() {
-    daoent_dao::Pallet::<Test>::create_dao(
-        RuntimeOrigin::signed(ALICE),
-        Nft(0u64),
-        vec![1; 4],
-        vec![],
-    )
-    .unwrap();
+    daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![])
+        .unwrap();
 }
 
 pub fn propose() {

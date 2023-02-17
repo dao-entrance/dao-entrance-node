@@ -54,8 +54,8 @@ use daoent_assets::{self as daoent_assets, asset_adaper_in_pallet::BasicCurrency
 use daoent_gov::traits::ConvertInto;
 use daoent_gov::traits::PledgeTrait;
 use daoent_primitives::{
-    traits::{AfterCreate, BaseCallFilter},
-    types::{AccountIdType, CallId, DaoAssetId, Fungible, TrailingZeroInput},
+    traits::AfterCreate,
+    types::{CallId, DaoAssetId},
 };
 use sp_runtime::{DispatchError, RuntimeDebug};
 
@@ -324,12 +324,10 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
             return Ok((Default::default(), Default::default()));
         }
 
-        let mut amount = 0 as Balance;
-        let asset_id = daoent_dao::Pallet::<Runtime>::try_get_asset_id(*dao_id)?;
         match self {
             Pledge::FungToken(x) => {
-                DAOAsset::reserve(id, who.clone(), *x)?;
-                amount = *x;
+                DAOAsset::reserve(dao_id.clone(), who.clone(), *x)?;
+                let amount = *x;
                 return Ok((
                     amount
                         .checked_mul(conviction.convert_into())
@@ -338,21 +336,20 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
                 ));
             }
         }
-        Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
+        // Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
     }
 
     fn vote_end_do(&self, who: &AccountId, dao_id: &DaoAssetId) -> Result<(), DispatchError> {
         if cfg!(any(feature = "std", feature = "runtime-benchmarks", test)) {
             return Ok(());
         }
-        let asset_id = daoent_dao::Pallet::<Runtime>::try_get_asset_id(*dao_id)?;
         match self {
             Pledge::FungToken(x) => {
-                DAOAsset::unreserve(id, who.clone(), *x)?;
+                DAOAsset::unreserve(dao_id.clone(), who.clone(), *x)?;
                 return Ok(());
             }
         }
-        Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
+        // Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
     }
 }
 
@@ -401,48 +398,6 @@ parameter_types! {
     pub const DaoPalletId: PalletId = PalletId(*b"ent--dao");
 }
 
-#[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, Clone, TypeInfo, Copy, MaxEncodedLen)]
-pub enum UnionId<TokenId> {
-    FungToken(TokenId),
-}
-
-impl<T: Encode + Decode, TokenId: Encode + Decode> AccountIdType<T> for UnionId<TokenId> {
-    fn into_account(&self) -> T {
-        match self {
-            UnionId::FungToken(x) => (b"fung", Fungible(x))
-                .using_encoded(|b| T::decode(&mut TrailingZeroInput(b)))
-                .unwrap(),
-        }
-    }
-
-    fn try_from_account(x: &T) -> Option<Self> {
-        x.using_encoded(|d| {
-            if &d[0..4] != b"fung" {
-                return None;
-            }
-            let mut cursor = &d[4..];
-            let result = Decode::decode(&mut cursor).ok()?;
-            if cursor.iter().all(|x| *x == 0) {
-                Some(result)
-            } else {
-                None
-            }
-        })
-    }
-}
-
-impl<TokenId: Default> Default for UnionId<TokenId> {
-    fn default() -> Self {
-        UnionId::FungToken(TokenId::default())
-    }
-}
-
-impl BaseCallFilter<RuntimeCall> for UnionId<DaoAssetId> {
-    fn contains(&self, _call: RuntimeCall) -> bool {
-        true
-    }
-}
-
 pub struct CreatedHook;
 impl AfterCreate<AccountId> for CreatedHook {
     fn run_hook(acount_id: AccountId, dao_id: DaoAssetId) {
@@ -458,22 +413,40 @@ impl daoent_dao::Config for Runtime {
     type AfterCreate = CreatedHook;
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;
-    type AssetId = UnionId<DaoAssetId>;
+    type PalletId = DaoPalletId;
 }
 
+/// 定义那些函数能被当作 sudo/gov 方式调用
 impl TryFrom<RuntimeCall> for CallId {
     type Error = ();
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
         match call {
+            RuntimeCall::DAO(func) => match func {
+                daoent_dao::Call::create_dao { .. } => Ok(101 as CallId),
+                _ => Err(()),
+            },
+            RuntimeCall::DAOAsset(func) => match func {
+                daoent_assets::Call::create_asset { .. } => Ok(101 as CallId),
+                _ => Err(()),
+            },
+            RuntimeCall::DAOGuild(func) => match func {
+                daoent_guild::Call::guild_join_request { .. } => Ok(301 as CallId),
+                _ => Err(()),
+            },
             // dao
             RuntimeCall::DAOProject(func) => match func {
                 daoent_project::Call::project_join_request { .. } => Ok(501 as CallId),
                 daoent_project::Call::create_project { .. } => Ok(502 as CallId),
                 daoent_project::Call::apply_project_funds { .. } => Ok(503 as CallId),
-                _ => Err(()),
-            },
-            RuntimeCall::DAOAsset(func) => match func {
-                daoent_assets::Call::set_existenial_deposit { .. } => Ok(401 as CallId),
+                daoent_project::Call::create_task { .. } => Ok(504 as CallId),
+                daoent_project::Call::join_task { .. } => Ok(505 as CallId),
+                daoent_project::Call::leave_task { .. } => Ok(506 as CallId),
+                daoent_project::Call::be_task_review { .. } => Ok(507 as CallId),
+                daoent_project::Call::leave_task_review { .. } => Ok(508 as CallId),
+                daoent_project::Call::start_task { .. } => Ok(509 as CallId),
+                daoent_project::Call::requset_review { .. } => Ok(510 as CallId),
+                daoent_project::Call::task_done { .. } => Ok(511 as CallId),
+                daoent_project::Call::make_review { .. } => Ok(512 as CallId),
                 _ => Err(()),
             },
             _ => Err(()),
@@ -507,7 +480,6 @@ parameter_types! {
 impl daoent_assets::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
-    type PalletId = DaoPalletId;
     type MaxCreatableId = MaxCreatableId;
     type MultiAsset = Tokens;
     type NativeAsset = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;

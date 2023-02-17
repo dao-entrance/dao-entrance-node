@@ -20,7 +20,6 @@ use orml_traits::MultiCurrency;
 
 use daoent_assets;
 use daoent_dao::{self};
-use daoent_primitives::traits::BaseCallFilter;
 use daoent_primitives::types::DaoAssetId;
 
 use weights::WeightInfo;
@@ -78,13 +77,10 @@ pub enum Opinion {
 /// Information about votes.
 /// 投票信息
 #[derive(Encode, Decode, Default, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct VoteInfo<DaoId, AssetId, Pledge, BlockNumber, VoteWeight, Opinion, ReferendumIndex> {
+pub struct VoteInfo<DaoId, Pledge, BlockNumber, VoteWeight, Opinion, ReferendumIndex> {
     /// The id of the Dao where the vote is located.
     /// 投票所在组织
     dao_id: DaoId,
-    /// The specific group id mapped by Dao.
-    /// 资产管理组
-    asset_id: AssetId,
     /// The specific thing that the vote pledged.
     /// 抵押
     pledge: Pledge,
@@ -310,15 +306,7 @@ pub mod pallet {
         Identity,
         T::AccountId,
         Vec<
-            VoteInfo<
-                DaoAssetId,
-                T::AssetId,
-                T::Pledge,
-                T::BlockNumber,
-                BalanceOf<T>,
-                Opinion,
-                ReferendumIndex,
-            >,
+            VoteInfo<DaoAssetId, T::Pledge, T::BlockNumber, BalanceOf<T>, Opinion, ReferendumIndex>,
         >,
         ValueQuery,
     >;
@@ -354,7 +342,7 @@ pub mod pallet {
             result: DResult,
         },
         /// Unlock
-        Unlock(T::AccountId, T::AssetId, T::Pledge),
+        Unlock(T::AccountId, DaoAssetId, T::Pledge),
         /// Unlock
         Unreserved(T::AccountId, BalanceOf<T>),
         /// Set Origin for each Call.
@@ -438,9 +426,13 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             Self::check_auth_for_proposal(dao_id, who.clone())?;
 
+            let call_id: T::CallId =
+                TryFrom::<<T as daoent_dao::Config>::RuntimeCall>::try_from(*proposal.clone())
+                    .unwrap_or_default();
+
             // 确认提案为当前资产支持的 调用
             ensure!(
-                daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?.contains(*proposal.clone()),
+                call_id != T::CallId::default(),
                 daoent_dao::Error::<T>::InVailCall
             );
 
@@ -578,7 +570,7 @@ pub mod pallet {
                     let mut info = h.take().ok_or(Error::<T>::ReferendumNotExists)?;
                     if let ReferendumInfo::Ongoing(ref mut x) = info {
                         if x.end > now {
-                            let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
+                            // let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
                             let vote_result = pledge.try_vote(&who, &dao_id, &conviction)?;
                             vote_weight = vote_result.0;
 
@@ -596,7 +588,6 @@ pub mod pallet {
                                 &who,
                                 VoteInfo {
                                     dao_id,
-                                    asset_id,
                                     pledge,
                                     opinion,
                                     vote_weight,
@@ -771,7 +762,7 @@ pub mod pallet {
                     if h.unlock_block > now || h.pledge.vote_end_do(&who, &h.dao_id).is_err() {
                         true
                     } else {
-                        Self::deposit_event(Event::<T>::Unlock(who.clone(), h.asset_id, h.pledge));
+                        Self::deposit_event(Event::<T>::Unlock(who.clone(), h.dao_id, h.pledge));
                         false
                     }
                 });

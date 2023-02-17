@@ -13,15 +13,9 @@ use frame_support::{assert_noop, assert_ok, debug, log::debug};
 pub const PROJECT_INDEX: ProjectId = 1;
 pub fn create_asset() -> DaoAssetId {
     let dao_id = daoent_dao::Pallet::<Test>::next_dao_id();
-    let asset = UnionId::FungToken(dao_id);
 
-    daoent_dao::Pallet::<Test>::create_dao(
-        RuntimeOrigin::signed(ALICE),
-        asset,
-        vec![1; 4],
-        vec![1; 4],
-    )
-    .unwrap();
+    daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![1; 4])
+        .unwrap();
 
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),
@@ -255,13 +249,13 @@ pub fn test_task() {
 pub fn print_account(dao_id: DaoAssetId) {
     let project_dao = daoent_assets::Pallet::<Test>::get_balance(
         dao_id,
-        daoent_assets::Pallet::<Test>::dao_project(dao_id, PROJECT_INDEX),
+        daoent_dao::Pallet::<Test>::dao_project(dao_id, PROJECT_INDEX),
     )
     .unwrap();
 
     let dao = daoent_assets::Pallet::<Test>::get_balance(
         dao_id,
-        daoent_assets::Pallet::<Test>::dao_asset(dao_id),
+        daoent_dao::Pallet::<Test>::dao_asset(dao_id),
     )
     .unwrap();
 

@@ -94,11 +94,6 @@ pub mod pallet {
             Self::check_enable(dao_id)?;
 
             let sudo = Self::check_sudo(dao_id, origin)?;
-            let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
-            ensure!(
-                daoent_primitives::traits::BaseCallFilter::contains(&asset_id, *call.clone()),
-                daoent_dao::Error::<T>::InVailCall
-            );
 
             let res = call.dispatch_bypass_filter(
                 frame_system::RawOrigin::Signed(daoent_dao::Pallet::<T>::try_get_dao_account_id(

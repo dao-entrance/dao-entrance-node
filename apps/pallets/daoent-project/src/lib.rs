@@ -304,7 +304,7 @@ pub mod pallet {
         }
 
         /// 为项目申请资金
-        #[pallet::call_index(012)]
+        #[pallet::call_index(003)]
         #[pallet::weight(1500_000_000)]
         pub fn apply_project_funds(
             origin: OriginFor<T>,
@@ -317,8 +317,8 @@ pub mod pallet {
 
             daoent_assets::Pallet::<T>::try_transfer(
                 dao_id,
-                daoent_assets::Pallet::<T>::dao_asset(dao_id),
-                daoent_assets::Pallet::<T>::dao_project(dao_id, project_id),
+                daoent_dao::Pallet::<T>::dao_asset(dao_id),
+                daoent_dao::Pallet::<T>::dao_project(dao_id, project_id),
                 amount,
             )?;
 
@@ -328,7 +328,7 @@ pub mod pallet {
         }
 
         /// 创建任务
-        #[pallet::call_index(003)]
+        #[pallet::call_index(004)]
         #[pallet::weight(1500_000_000)]
         pub fn create_task(
             origin: OriginFor<T>,
@@ -376,7 +376,7 @@ pub mod pallet {
             // 预备资金
             daoent_assets::Pallet::<T>::reserve(
                 dao_id,
-                daoent_assets::Pallet::<T>::dao_project(dao_id, project_id),
+                daoent_dao::Pallet::<T>::dao_project(dao_id, project_id),
                 amount,
             )?;
 
@@ -396,7 +396,7 @@ pub mod pallet {
         }
 
         /// 加入任务
-        #[pallet::call_index(004)]
+        #[pallet::call_index(005)]
         #[pallet::weight(1500_000_000)]
         pub fn join_task(
             origin: OriginFor<T>,
@@ -439,7 +439,7 @@ pub mod pallet {
         }
 
         /// 离开项目
-        #[pallet::call_index(005)]
+        #[pallet::call_index(006)]
         #[pallet::weight(1500_000_000)]
         pub fn leave_task(
             origin: OriginFor<T>,
@@ -474,7 +474,7 @@ pub mod pallet {
         }
 
         /// 加入项目审核团队
-        #[pallet::call_index(006)]
+        #[pallet::call_index(007)]
         #[pallet::weight(1500_000_000)]
         pub fn be_task_review(
             origin: OriginFor<T>,
@@ -514,7 +514,7 @@ pub mod pallet {
         }
 
         /// 离开任务审核
-        #[pallet::call_index(007)]
+        #[pallet::call_index(008)]
         #[pallet::weight(1500_000_000)]
         pub fn leave_task_review(
             origin: OriginFor<T>,
@@ -547,7 +547,7 @@ pub mod pallet {
         }
 
         /// 开始任务
-        #[pallet::call_index(008)]
+        #[pallet::call_index(009)]
         #[pallet::weight(1500_000_000)]
         pub fn start_task(
             origin: OriginFor<T>,
@@ -581,7 +581,7 @@ pub mod pallet {
         }
 
         /// 申请审核
-        #[pallet::call_index(009)]
+        #[pallet::call_index(010)]
         #[pallet::weight(1500_000_000)]
         pub fn requset_review(
             origin: OriginFor<T>,
@@ -623,7 +623,7 @@ pub mod pallet {
         }
 
         /// 完成任务
-        #[pallet::call_index(010)]
+        #[pallet::call_index(011)]
         #[pallet::weight(1500_000_000)]
         pub fn task_done(
             origin: OriginFor<T>,
@@ -654,7 +654,7 @@ pub mod pallet {
                 Error::<T>::ReviewPending
             );
 
-            let project_account = daoent_assets::Pallet::<T>::dao_project(dao_id, task.project_id);
+            let project_account = daoent_dao::Pallet::<T>::dao_project(dao_id, task.project_id);
             let total = task.rewards[0].1;
             let total_u64: u64 = total.saturated_into::<u64>();
             let amount_u64 =
@@ -672,6 +672,11 @@ pub mod pallet {
                     assignee.clone(),
                     amount,
                 )?;
+                daoent_dao::Pallet::<T>::try_add_member_point(
+                    dao_id,
+                    assignee.clone(),
+                    task.point.into(),
+                )?;
             }
 
             // 修改状态
@@ -684,7 +689,7 @@ pub mod pallet {
         }
 
         /// 发送审核报告
-        #[pallet::call_index(011)]
+        #[pallet::call_index(012)]
         #[pallet::weight(1500_000_000)]
         pub fn make_review(
             origin: OriginFor<T>,

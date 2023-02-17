@@ -5,7 +5,9 @@ Follow the steps below to get started with the exmplam node.
 
 ### Rust Setup
 
-First, complete the [basic Rust setup instructions](./docs/rust-setup.md).
+- [Linux development environment](https://docs.substrate.io/install/linux/).
+- [MacOS development environment](https://docs.substrate.io/install/linux/).
+- [Windows development environment](https://docs.substrate.io/install/linux/).
 
 ### Run
 

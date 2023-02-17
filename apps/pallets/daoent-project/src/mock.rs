@@ -15,8 +15,8 @@ use sp_runtime::{
 
 use daoent_assets::{self as daoent_assets, asset_adaper_in_pallet::BasicCurrencyAdapter};
 use daoent_primitives::{
-    traits::{AfterCreate, BaseCallFilter},
-    types::{AccountIdType, CallId, DaoAssetId, Fungible, TrailingZeroInput},
+    traits::AfterCreate,
+    types::{CallId, DaoAssetId},
 };
 
 type Amount = i128;
@@ -159,48 +159,6 @@ parameter_types! {
     pub const DaoPalletId: PalletId = PalletId(*b"ent--dao");
 }
 
-#[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, Clone, TypeInfo, Copy, MaxEncodedLen)]
-pub enum UnionId<TokenId> {
-    FungToken(TokenId),
-}
-
-impl<T: Encode + Decode, TokenId: Encode + Decode> AccountIdType<T> for UnionId<TokenId> {
-    fn into_account(&self) -> T {
-        match self {
-            UnionId::FungToken(x) => (b"fung", Fungible(x))
-                .using_encoded(|b| T::decode(&mut TrailingZeroInput(b)))
-                .unwrap(),
-        }
-    }
-
-    fn try_from_account(x: &T) -> Option<Self> {
-        x.using_encoded(|d| {
-            if &d[0..4] != b"fung" {
-                return None;
-            }
-            let mut cursor = &d[4..];
-            let result = Decode::decode(&mut cursor).ok()?;
-            if cursor.iter().all(|x| *x == 0) {
-                Some(result)
-            } else {
-                None
-            }
-        })
-    }
-}
-
-impl<TokenId: Default> Default for UnionId<TokenId> {
-    fn default() -> Self {
-        UnionId::FungToken(TokenId::default())
-    }
-}
-
-impl BaseCallFilter<RuntimeCall> for UnionId<DaoAssetId> {
-    fn contains(&self, _call: RuntimeCall) -> bool {
-        true
-    }
-}
-
 pub struct CreatedHook;
 impl AfterCreate<AccountId> for CreatedHook {
     fn run_hook(acount_id: AccountId, dao_id: DaoAssetId) {
@@ -216,7 +174,7 @@ impl daoent_dao::Config for Test {
     type AfterCreate = CreatedHook;
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;
-    type AssetId = UnionId<DaoAssetId>;
+    type PalletId = DaoPalletId;
 }
 
 impl TryFrom<RuntimeCall> for CallId {
@@ -265,7 +223,6 @@ parameter_types! {
 impl daoent_assets::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
-    type PalletId = DaoPalletId;
     type MaxCreatableId = MaxCreatableId;
     type MultiAsset = Tokens;
     type NativeAsset = BasicCurrencyAdapter<Test, Balances, Amount, BlockNumber>;
