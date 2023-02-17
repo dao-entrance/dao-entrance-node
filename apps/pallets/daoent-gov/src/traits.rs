@@ -1,6 +1,6 @@
 use super::*;
 
-pub trait Pledge<VoteWeight, AccountId, DaoId, Convivtion, BlockNumber, DispatchError> {
+pub trait PledgeTrait<VoteWeight, AccountId, DaoId, Convivtion, BlockNumber, DispatchError> {
     fn try_vote(
         &self,
         who: &AccountId,

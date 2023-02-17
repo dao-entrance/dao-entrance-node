@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 
 use crate as daoent_gov;
-use crate::Pledge;
+use crate::PledgeTrait;
 use codec::{Decode, Encode, MaxEncodedLen};
 use daoent_assets::asset_adaper_in_pallet::BasicCurrencyAdapter;
 use daoent_primitives::{
@@ -171,7 +171,7 @@ impl daoent_assets::Config for Test {
 )]
 pub struct Vote(pub AccountId);
 
-impl Pledge<u64, AccountId, u64, (), u64, DispatchError> for Vote {
+impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
     fn try_vote(
         &self,
         _who: &AccountId,

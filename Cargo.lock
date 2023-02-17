@@ -3805,8 +3805,12 @@ dependencies = [
 name = "node-template-runtime"
 version = "1.0.0"
 dependencies = [
+ "daoent-assets",
  "daoent-dao",
+ "daoent-gov",
+ "daoent-guild",
  "daoent-primitives",
+ "daoent-project",
  "daoent-sudo",
  "frame-benchmarking",
  "frame-executive",
@@ -3815,6 +3819,8 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
+ "orml-tokens",
+ "orml-traits",
  "pallet-aura",
  "pallet-balances",
  "pallet-grandpa",

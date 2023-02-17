@@ -3,7 +3,7 @@ use super::*;
 
 use crate as daoent_project;
 use codec::MaxEncodedLen;
-use daoent_gov::traits::Pledge;
+use daoent_gov::traits::PledgeTrait;
 use frame_support::{construct_runtime, parameter_types, traits::Contains, PalletId};
 use orml_traits::parameter_type_with_key;
 use sp_core::{ConstU32, H256};
@@ -47,12 +47,43 @@ construct_runtime!(
     }
 );
 
+parameter_types! {
+    pub const BlockHashCount: u64 = 250;
+}
+
+impl frame_system::Config for Test {
+    type RuntimeOrigin = RuntimeOrigin;
+    type RuntimeEvent = RuntimeEvent;
+    type RuntimeCall = RuntimeCall;
+    type MaxConsumers = frame_support::traits::ConstU32<16>;
+    type Index = u64;
+    type BlockNumber = BlockNumber;
+    type Hash = H256;
+    type Hashing = ::sp_runtime::traits::BlakeTwo256;
+    type AccountId = AccountId;
+    type Lookup = IdentityLookup<Self::AccountId>;
+    type Header = Header;
+    type BlockHashCount = BlockHashCount;
+    type BlockWeights = ();
+    type BlockLength = ();
+    type Version = ();
+    type PalletInfo = PalletInfo;
+    type AccountData = pallet_balances::AccountData<Balance>;
+    type OnNewAccount = ();
+    type OnKilledAccount = ();
+    type DbWeight = ();
+    type BaseCallFilter = frame_support::traits::Everything;
+    type SystemWeightInfo = ();
+    type SS58Prefix = ();
+    type OnSetCode = ();
+}
+
 #[derive(
     PartialEq, Eq, Encode, Decode, RuntimeDebug, Clone, TypeInfo, Copy, MaxEncodedLen, Default,
 )]
 pub struct Vote(pub AccountId);
 
-impl Pledge<u64, AccountId, u64, (), u64, DispatchError> for Vote {
+impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
     fn try_vote(
         &self,
         _who: &AccountId,
@@ -106,37 +137,6 @@ impl orml_tokens::Config for Test {
     type MaxReserves = TokensMaxReserves;
     type ReserveIdentifier = [u8; 8];
     type DustRemovalWhitelist = DustRemovalWhitelist;
-}
-
-parameter_types! {
-    pub const BlockHashCount: u64 = 250;
-}
-
-impl frame_system::Config for Test {
-    type RuntimeOrigin = RuntimeOrigin;
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type MaxConsumers = frame_support::traits::ConstU32<16>;
-    type Index = u64;
-    type BlockNumber = BlockNumber;
-    type Hash = H256;
-    type Hashing = ::sp_runtime::traits::BlakeTwo256;
-    type AccountId = AccountId;
-    type Lookup = IdentityLookup<Self::AccountId>;
-    type Header = Header;
-    type BlockHashCount = BlockHashCount;
-    type BlockWeights = ();
-    type BlockLength = ();
-    type Version = ();
-    type PalletInfo = PalletInfo;
-    type AccountData = pallet_balances::AccountData<Balance>;
-    type OnNewAccount = ();
-    type OnKilledAccount = ();
-    type DbWeight = ();
-    type BaseCallFilter = frame_support::traits::Everything;
-    type SystemWeightInfo = ();
-    type SS58Prefix = ();
-    type OnSetCode = ();
 }
 
 parameter_types! {

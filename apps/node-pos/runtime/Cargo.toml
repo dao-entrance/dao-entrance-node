@@ -45,9 +45,16 @@ frame-benchmarking = { version = "4.0.0-dev", default-features = false, git = "h
 frame-system-benchmarking = { version = "4.0.0-dev", default-features = false, git = "https://github.com/paritytech/substrate.git", optional = true , "branch" = "polkadot-v0.9.36" }
 
 # Local Dependencies
-daoent-dao = { package = "daoent-dao", default-features = false, path = "../../pallets/daoent-dao" }
-daoent-sudo = { package = "daoent-sudo", default-features = false, path = "../../pallets/daoent-sudo"}
+orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "polkadot-v0.9.36"}
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library.git", branch = "polkadot-v0.9.36"}
+
 daoent-primitives = { path = "../../primitives", package = "daoent-primitives", default-features = false}
+daoent-dao = { path = "../../pallets/daoent-dao", package = "daoent-dao", default-features = false}
+daoent-gov = { path = "../../pallets/daoent-gov", package = "daoent-gov", default-features = false}
+daoent-sudo = { path = "../../pallets/daoent-sudo", package = "daoent-sudo", default-features = false}
+daoent-assets = { path = "../../pallets/daoent-assets", package = "daoent-assets", default-features = false}
+daoent-guild = { path = "../../pallets/daoent-guild", package = "daoent-guild", default-features = false}
+daoent-project = { path = "../../pallets/daoent-project", package = "daoent-project", default-features = false}
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", "branch" = "polkadot-v0.9.36" }
@@ -85,6 +92,16 @@ std = [
 	"sp-std/std",
 	"sp-transaction-pool/std",
 	"sp-version/std",
+
+	"orml-traits/std",
+    "orml-tokens/std",
+	"daoent-primitives/std",
+	"daoent-dao/std",
+	"daoent-sudo/std",
+	"daoent-gov/std",
+	"daoent-assets/std",
+    "daoent-guild/std",
+    "daoent-project/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
@@ -93,9 +110,10 @@ runtime-benchmarks = [
 	"frame-system/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
-	"daoent-dao/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
+	
+	"daoent-dao/runtime-benchmarks",
 ]
 try-runtime = [
 	"frame-try-runtime/try-runtime",
@@ -107,7 +125,8 @@ try-runtime = [
 	"pallet-grandpa/try-runtime",
 	"pallet-randomness-collective-flip/try-runtime",
 	"pallet-sudo/try-runtime",
-	"daoent-dao/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
+
+	"daoent-dao/try-runtime",
 ]

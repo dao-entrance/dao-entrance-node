@@ -1,11 +1,11 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use frame_support::codec::{Decode, Encode};
+use frame_support::inherent::Vec;
 use frame_support::sp_runtime::SaturatedConversion;
 use frame_support::{dispatch::DispatchResultWithPostInfo, pallet_prelude::*};
 use frame_system::pallet_prelude::*;
 use scale_info::TypeInfo;
-use serde::{self, Deserialize, Serialize};
 use sp_runtime::RuntimeDebug;
 use sp_std::result;
 
@@ -50,7 +50,7 @@ pub enum TaskStatus {
 
 /// Project specific information
 /// 看板信息
-#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct ProjectInfo<AccountId, Status> {
     /// boardID
     /// 看板ID
@@ -69,7 +69,7 @@ pub struct ProjectInfo<AccountId, Status> {
 
 /// task specific information
 /// 任务信息
-#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Clone, RuntimeDebug, Encode, Decode, TypeInfo)]
 pub struct TaskInfo<AccountId, Balance, TaskStatus> {
     pub id: TaskId,
     pub name: Vec<u8>,
@@ -356,11 +356,11 @@ pub mod pallet {
                 point,
                 priority,
                 creator: me.clone(),
-                rewards: vec![(dao_id, amount)],
+                rewards: [(dao_id, amount)].into(),
                 max_assignee: 1,
-                assignees: vec![],
-                reviewers: vec![],
-                skills: vec![],
+                assignees: [].into(),
+                reviewers: [].into(),
+                skills: [].into(),
                 status: TaskStatus::ToDo,
             };
             if max_assignee.is_some() {
@@ -613,7 +613,7 @@ pub mod pallet {
             <TaskReviews<T>>::insert(
                 task_id,
                 ReviewStatus {
-                    records: vec![],
+                    records: [].into(),
                     tally: Tally { yes: 0, no: 0 },
                 },
             );

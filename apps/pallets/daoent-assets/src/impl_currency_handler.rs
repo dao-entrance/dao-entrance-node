@@ -17,8 +17,8 @@ impl<T: Config>
             _ => {
                 if cfg!(any(feature = "std", feature = "runtime-benchmarks", test)) {
                     return Ok(DaoAssetMeta {
-                        name: vec![],
-                        symbol: vec![],
+                        name: [].into(),
+                        symbol: [].into(),
                         decimals: 12,
                     });
                 } else {

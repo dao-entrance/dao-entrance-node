@@ -2,6 +2,7 @@
 #![allow(clippy::type_complexity)]
 
 use codec::{Decode, Encode};
+use frame_support::inherent::Vec;
 use frame_support::{
     dispatch::{DispatchResult as DResult, UnfilteredDispatchable},
     RuntimeDebug,
@@ -153,7 +154,7 @@ pub mod pallet {
             + Copy
             + Parameter
             + Member
-            + Pledge<
+            + PledgeTrait<
                 BalanceOf<Self>,
                 Self::AccountId,
                 DaoAssetId,

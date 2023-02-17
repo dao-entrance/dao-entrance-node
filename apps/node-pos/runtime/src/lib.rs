@@ -21,14 +21,12 @@ use sp_runtime::{
     ApplyExtrinsicResult, MultiSignature,
 };
 use sp_std::prelude::*;
-
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-    codec::{Decode, Encode},
     construct_runtime, parameter_types,
     traits::{
         ConstU128, ConstU32, ConstU64, ConstU8, KeyOwnerProofSystem, Randomness, StorageInfo,
@@ -45,23 +43,32 @@ pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
 use pallet_transaction_payment::{ConstFeeMultiplier, CurrencyAdapter, Multiplier};
-
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+pub use sp_runtime::{Perbill, Permill};
 
-pub use sp_runtime::{DispatchError, Perbill, Permill, RuntimeDebug};
+// Import the DAO pallet.
 
-pub use codec::MaxEncodedLen;
-
-/// Import the DAO pallet.
-pub use daoent_dao;
+use codec::MaxEncodedLen;
+use daoent_assets::{self as daoent_assets, asset_adaper_in_pallet::BasicCurrencyAdapter};
+use daoent_gov::traits::ConvertInto;
+use daoent_gov::traits::PledgeTrait;
 use daoent_primitives::{
     traits::{AfterCreate, BaseCallFilter},
     types::{AccountIdType, CallId, DaoAssetId, Fungible, TrailingZeroInput},
 };
-pub use daoent_sudo;
+use sp_runtime::{DispatchError, RuntimeDebug};
+
+use frame_support::{
+    codec::{Decode, Encode},
+    traits::Contains,
+    PalletId,
+};
+use orml_traits::parameter_type_with_key;
 pub use scale_info::TypeInfo;
-/// end DAO pallet.
+use sp_runtime::traits::Zero;
+
+// end DAO pallet.
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -216,7 +223,7 @@ impl frame_system::Config for Runtime {
     type SystemWeightInfo = ();
     /// This is used as an identifier of the chain. 42 is the generic substrate prefix.
     type SS58Prefix = SS58Prefix;
-    /// The set code logic, just the default since we're not a paraTypeInfochain.
+    /// The set code logic, just the default since we're not a parachain.
     type OnSetCode = ();
     type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
@@ -286,10 +293,112 @@ impl pallet_transaction_payment::Config for Runtime {
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
-/// DAO Start
 impl pallet_sudo::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
+}
+
+/// DAO Start
+type Amount = i128;
+
+#[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, Clone, TypeInfo, Copy, MaxEncodedLen)]
+pub enum Pledge<Balance> {
+    FungToken(Balance),
+}
+
+impl Default for Pledge<Balance> {
+    fn default() -> Self {
+        Pledge::FungToken(0)
+    }
+}
+impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
+    for Pledge<Balance>
+{
+    fn try_vote(
+        &self,
+        who: &AccountId,
+        dao_id: &DaoAssetId,
+        conviction: &(),
+    ) -> Result<(Balance, BlockNumber), DispatchError> {
+        if cfg!(any(feature = "std", feature = "runtime-benchmarks", test)) {
+            return Ok((Default::default(), Default::default()));
+        }
+
+        let mut amount = 0 as Balance;
+        let asset_id = daoent_dao::Pallet::<Runtime>::try_get_asset_id(*dao_id)?;
+        match self {
+            Pledge::FungToken(x) => {
+                DAOAsset::reserve(id, who.clone(), *x)?;
+                amount = *x;
+                return Ok((
+                    amount
+                        .checked_mul(conviction.convert_into())
+                        .ok_or(daoent_gov::Error::<Runtime>::Overflow)?,
+                    conviction.convert_into(),
+                ));
+            }
+        }
+        Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
+    }
+
+    fn vote_end_do(&self, who: &AccountId, dao_id: &DaoAssetId) -> Result<(), DispatchError> {
+        if cfg!(any(feature = "std", feature = "runtime-benchmarks", test)) {
+            return Ok(());
+        }
+        let asset_id = daoent_dao::Pallet::<Runtime>::try_get_asset_id(*dao_id)?;
+        match self {
+            Pledge::FungToken(x) => {
+                DAOAsset::unreserve(id, who.clone(), *x)?;
+                return Ok(());
+            }
+        }
+        Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
+    }
+}
+
+impl daoent_gov::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type Pledge = Pledge<Balance>;
+    type Conviction = ();
+    type WeightInfo = ();
+}
+
+impl daoent_project::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = ();
+}
+
+parameter_types! {
+    pub const TokensMaxReserves: u32 = 50;
+}
+
+pub struct DustRemovalWhitelist;
+impl Contains<AccountId> for DustRemovalWhitelist {
+    fn contains(a: &AccountId) -> bool {
+        get_all_module_accounts().contains(a)
+    }
+}
+
+pub fn get_all_module_accounts() -> Vec<AccountId> {
+    vec![]
+}
+
+impl orml_tokens::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type CurrencyHooks = ();
+    type Balance = Balance;
+    type Amount = Amount;
+    type CurrencyId = DaoAssetId;
+    type WeightInfo = ();
+    type ExistentialDeposits = ExistentialDeposits;
+    type MaxLocks = MaxLocks;
+    type MaxReserves = TokensMaxReserves;
+    type ReserveIdentifier = [u8; 8];
+    type DustRemovalWhitelist = DustRemovalWhitelist;
+}
+
+parameter_types! {
+    pub const DaoPalletId: PalletId = PalletId(*b"ent--dao");
 }
 
 #[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug, Clone, TypeInfo, Copy, MaxEncodedLen)]
@@ -342,7 +451,6 @@ impl AfterCreate<AccountId> for CreatedHook {
     }
 }
 
-/// Configure the pallet-template in pallets/template.
 impl daoent_dao::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
@@ -355,12 +463,17 @@ impl daoent_dao::Config for Runtime {
 
 impl TryFrom<RuntimeCall> for CallId {
     type Error = ();
-
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
         match call {
             // dao
-            RuntimeCall::DAO(func) => match func {
-                daoent_dao::Call::create_dao { .. } => Ok(101 as CallId),
+            RuntimeCall::DAOProject(func) => match func {
+                daoent_project::Call::project_join_request { .. } => Ok(501 as CallId),
+                daoent_project::Call::create_project { .. } => Ok(502 as CallId),
+                daoent_project::Call::apply_project_funds { .. } => Ok(503 as CallId),
+                _ => Err(()),
+            },
+            RuntimeCall::DAOAsset(func) => match func {
+                daoent_assets::Call::set_existenial_deposit { .. } => Ok(401 as CallId),
                 _ => Err(()),
             },
             _ => Err(()),
@@ -368,7 +481,44 @@ impl TryFrom<RuntimeCall> for CallId {
     }
 }
 
+parameter_types! {
+    pub const MaxClassMetadata: u32 = 1;
+    pub const MaxTokenMetadata: u32 = 1;
+}
+
+parameter_type_with_key! {
+    pub ExistentialDeposits: |_currency_id: u64| -> Balance {
+        Zero::zero()
+    };
+}
+
+pub struct MockDustRemovalWhitelist;
+impl Contains<AccountId> for MockDustRemovalWhitelist {
+    fn contains(_a: &AccountId) -> bool {
+        false
+    }
+}
+
+parameter_types! {
+    pub const MaxLocks: u32 = 50;
+    pub const MaxCreatableId: DaoAssetId = 100;
+}
+
+impl daoent_assets::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = ();
+    type PalletId = DaoPalletId;
+    type MaxCreatableId = MaxCreatableId;
+    type MultiAsset = Tokens;
+    type NativeAsset = BasicCurrencyAdapter<Runtime, Balances, Amount, BlockNumber>;
+}
+
 impl daoent_sudo::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = ();
+}
+
+impl daoent_guild::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
 }
@@ -391,9 +541,16 @@ construct_runtime!(
         Balances: pallet_balances,
         TransactionPayment: pallet_transaction_payment,
         Sudo: pallet_sudo,
-        // Include the custom logic from the pallet-template in the runtime.
+
+        // token
+        Tokens: orml_tokens,
+        // DAO
         DAO: daoent_dao,
-        DAOSudo: daoent_sudo::{ Pallet, Call, Event<T>, Storage },
+        DAOAsset: daoent_assets,
+        DAOSudo: daoent_sudo,
+        DAOGuild: daoent_guild,
+        DAOProject: daoent_project,
+        DAOGov: daoent_gov,
     }
 );
 
@@ -440,7 +597,7 @@ mod benches {
         [frame_system, SystemBench::<Runtime>]
         [pallet_balances, Balances]
         [pallet_timestamp, Timestamp]
-        [daoent_dao, TemplateModule]
+        [pallet_template, TemplateModule]
     );
 }
 
@@ -635,22 +792,23 @@ impl_runtime_apis! {
 
     #[cfg(feature = "try-runtime")]
     impl frame_try_runtime::TryRuntime<Block> for Runtime {
-        fn on_runtime_upgrade() -> (Weight, Weight) {
+        fn on_runtime_upgrade(checks: bool) -> (Weight, Weight) {
             // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
             // have a backtrace here. If any of the pre/post migration checks fail, we shall stop
             // right here and right now.
-            let weight = Executive::try_runtime_upgrade().unwrap();
+            let weight = Executive::try_runtime_upgrade(checks).unwrap();
             (weight, BlockWeights::get().max_block)
         }
 
         fn execute_block(
             block: Block,
             state_root_check: bool,
+            signature_check: bool,
             select: frame_try_runtime::TryStateSelect
         ) -> Weight {
             // NOTE: intentional unwrap: we don't want to propagate the error backwards, and want to
             // have a backtrace here.
-            Executive::try_execute_block(block, state_root_check, select).expect("execute-block failed")
+            Executive::try_execute_block(block, state_root_check, signature_check, select).expect("execute-block failed")
         }
     }
 }

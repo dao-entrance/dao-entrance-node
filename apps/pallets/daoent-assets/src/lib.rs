@@ -79,6 +79,18 @@ pub struct DaoAssetInfo<AccountId, DaoAssetMeta> {
     pub metadata: Option<DaoAssetMeta>,
 }
 
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, TypeInfo)]
+pub struct DaoAssetAccount {
+    pub dao_id: DaoAssetId,
+    pub t: u8,
+}
+
+#[derive(Clone, Encode, Decode, Eq, PartialEq, Default, RuntimeDebug, TypeInfo)]
+pub struct DaoProjectAccount {
+    pub dao_id: DaoAssetId,
+    pub project_id: ProjectId,
+}
+
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
@@ -183,7 +195,7 @@ pub mod pallet {
 
     #[pallet::storage]
     #[pallet::getter(fn existenial_deposits)]
-    pub type ExistentialDeposits<T: Config> =
+    pub type ExistentDeposits<T: Config> =
         StorageMap<_, Identity, DaoAssetId, BalanceOf<T>, ValueQuery>;
 
     #[pallet::pallet]
@@ -242,7 +254,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
             daoent_dao::Pallet::<T>::ensrue_dao_root(who, asset_id)?;
 
-            ExistentialDeposits::<T>::insert(asset_id, existenial_deposit);
+            ExistentDeposits::<T>::insert(asset_id, existenial_deposit);
             Self::deposit_event(Event::SetExistenialDepposit {
                 asset_id,
                 existenial_deposit,
@@ -370,7 +382,7 @@ pub mod pallet {
             let who = ensure_signed(origin)?;
 
             // 获取最小的账户
-            let min_existenial_deposit: BalanceOf<T> = ExistentialDeposits::<T>::get(dao_id);
+            let min_existenial_deposit: BalanceOf<T> = ExistentDeposits::<T>::get(dao_id);
             ensure!(
                 existenial_deposit >= min_existenial_deposit,
                 Error::<T>::DepositTooLow
@@ -418,16 +430,18 @@ pub mod pallet {
 
         /// 获取DAO账户
         pub fn dao_asset_pending(dao_id: DaoAssetId) -> T::AccountId {
-            T::PalletId::get().into_sub_account_truncating(dao_id.to_string() + "PENDING")
+            T::PalletId::get().into_sub_account_truncating(DaoAssetAccount { dao_id, t: 2 })
         }
 
-        /// 获取DAO账户
+        /// 获取DAO项目账户
         pub fn dao_project(dao_id: DaoAssetId, p_id: ProjectId) -> T::AccountId {
-            T::PalletId::get()
-                .into_sub_account_truncating(dao_id.to_string() + "PROJECT" + &p_id.to_string())
+            T::PalletId::get().into_sub_account_truncating(DaoProjectAccount {
+                dao_id,
+                project_id: p_id,
+            })
         }
 
-        /// 获取DAO账户
+        /// 获取账户金额
         pub fn get_balance(
             asset_id: DaoAssetId,
             who: T::AccountId,
@@ -442,7 +456,7 @@ pub mod pallet {
             Ok(balance)
         }
 
-        /// 获取DAO账户
+        /// 为...保证
         pub fn reserve(
             asset_id: DaoAssetId,
             who: T::AccountId,
@@ -457,7 +471,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /// 获取DAO账户
+        /// 解除保证
         pub fn unreserve(
             asset_id: DaoAssetId,
             who: T::AccountId,
@@ -472,7 +486,7 @@ pub mod pallet {
             Ok(())
         }
 
-        /// 获取DAO账户
+        /// 转帐
         pub fn try_transfer(
             asset_id: DaoAssetId,
             from: T::AccountId,

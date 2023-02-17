@@ -20,8 +20,6 @@ mod tests;
 mod weights;
 pub use weights::WeightInfo;
 
-mod traits;
-
 #[frame_support::pallet]
 pub mod pallet {
     use super::*;
