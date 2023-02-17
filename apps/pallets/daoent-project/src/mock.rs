@@ -42,7 +42,7 @@ construct_runtime!(
         DAO: daoent_dao::{ Pallet, Call, Event<T>, Storage },
         DAOAsset: daoent_assets::{ Pallet, Call, Event<T>, Storage },
         DAOSudo: daoent_sudo::{ Pallet, Call, Event<T>, Storage },
-        DAOGuild: daoent_project::{ Pallet, Call, Event<T>, Storage },
+        DAOProject: daoent_project::{ Pallet, Call, Event<T>, Storage },
         DAOGov: daoent_gov::{ Pallet, Call, Event<T>, Storage },
     }
 );
@@ -224,8 +224,14 @@ impl TryFrom<RuntimeCall> for CallId {
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
         match call {
             // dao
-            RuntimeCall::DAOGuild(func) => match func {
-                daoent_project::Call::project_join_request { .. } => Ok(401 as CallId),
+            RuntimeCall::DAOProject(func) => match func {
+                daoent_project::Call::project_join_request { .. } => Ok(501 as CallId),
+                daoent_project::Call::create_project { .. } => Ok(502 as CallId),
+                daoent_project::Call::apply_project_funds { .. } => Ok(503 as CallId),
+                _ => Err(()),
+            },
+            RuntimeCall::DAOAsset(func) => match func {
+                daoent_assets::Call::set_existenial_deposit { .. } => Ok(401 as CallId),
                 _ => Err(()),
             },
             _ => Err(()),

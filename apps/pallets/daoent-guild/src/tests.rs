@@ -24,12 +24,13 @@ pub fn create_asset() -> DaoAssetId {
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),
         dao_id,
-        10000,
         Some(daoent_assets::DaoAssetMeta {
             name: "TestA".as_bytes().to_vec(),
             symbol: "TA".as_bytes().to_vec(),
             decimals: 10,
         }),
+        10000,
+        99,
     )
     .unwrap();
 

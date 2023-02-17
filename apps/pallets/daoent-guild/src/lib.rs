@@ -40,7 +40,7 @@ pub mod pallet {
     #[pallet::event]
     #[pallet::generate_deposit(pub (crate) fn deposit_event)]
     pub enum Event<T: Config> {
-        GuildJoined(DaoAssetId, u32, T::AccountId),
+        GuildJoined(DaoAssetId, u64, T::AccountId),
     }
 
     #[pallet::pallet]
@@ -57,7 +57,7 @@ pub mod pallet {
         pub fn guild_join_request(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
-            guild_id: u32,
+            guild_id: u64,
             who: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let me = ensure_signed(origin)?;

@@ -257,7 +257,7 @@ pub mod pallet {
             PropIndex,
             T::Hash,
             <T as daoent_dao::Config>::RuntimeCall,
-            MemmberData<u32>,
+            MemmberData<u64>,
             T::AccountId,
         )>,
         ValueQuery,
@@ -430,7 +430,7 @@ pub mod pallet {
         pub fn create_propose(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
-            member_data: MemmberData<u32>,
+            member_data: MemmberData<u64>,
             proposal: Box<<T as daoent_dao::Config>::RuntimeCall>,
             #[pallet::compact] value: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
@@ -908,7 +908,7 @@ pub mod pallet {
         /// 获取当前投票的作用范围
         pub fn try_get_members(
             dao_id: DaoAssetId,
-            member_data: MemmberData<u32>,
+            member_data: MemmberData<u64>,
         ) -> result::Result<BoundedVec<T::AccountId, T::MaxMembers>, DispatchError> {
             let ms: BoundedVec<T::AccountId, T::MaxMembers>;
             match member_data {
@@ -933,7 +933,7 @@ pub mod pallet {
         /// 获取用户是否有 提案//投票 的权利
         pub fn check_auth_for_vote(
             dao_id: DaoAssetId,
-            member_data: MemmberData<u32>,
+            member_data: MemmberData<u64>,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
             let ms: BoundedVec<T::AccountId, T::MaxMembers>;

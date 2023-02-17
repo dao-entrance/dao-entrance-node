@@ -3,7 +3,7 @@
 use codec::MaxEncodedLen;
 use daoent_primitives::{
     traits::{AfterCreate, BaseCallFilter},
-    types::{AccountIdType, DaoAssetId},
+    types::{AccountIdType, DaoAssetId, ProjectId},
 };
 use frame_support::{
     codec::{Decode, Encode},
@@ -216,7 +216,7 @@ pub mod pallet {
         Twox64Concat,
         DaoAssetId,
         Twox64Concat,
-        u32,
+        u64,
         BoundedVec<T::AccountId, T::MaxMembers>,
         ValueQuery,
     >;
@@ -230,7 +230,7 @@ pub mod pallet {
         Twox64Concat,
         DaoAssetId,
         Twox64Concat,
-        u32,
+        ProjectId,
         BoundedVec<T::AccountId, T::MaxMembers>,
         ValueQuery,
     >;
@@ -473,13 +473,13 @@ pub mod pallet {
         /// 添加成员
         pub fn try_add_guild_member(
             dao_id: DaoAssetId,
-            guild_id: u32,
+            guild_id: u64,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
             let guild = <Guilds<T>>::get(dao_id);
             ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
 
-            let gindex: u32 = guild_id.into();
+            let gindex: u64 = guild_id.into();
             let mut members = <GuildMembers<T>>::get(dao_id, gindex);
             let index = members
                 .binary_search(&who)
@@ -498,13 +498,13 @@ pub mod pallet {
         /// 删除成员
         pub fn try_remove_guild_member(
             dao_id: DaoAssetId,
-            guild_id: u32,
+            guild_id: u64,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
             let guild = <Guilds<T>>::get(dao_id);
             ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
 
-            let gindex: u32 = guild_id.into();
+            let gindex: u64 = guild_id.into();
             let mut members = <GuildMembers<T>>::get(dao_id, gindex);
             let index = members
                 .binary_search(&who)
@@ -548,6 +548,47 @@ pub mod pallet {
 
             members.remove(index);
             <Members<T>>::insert(dao_id, &members);
+            Ok(index)
+        }
+
+        /// 添加项目成员
+        pub fn try_add_project_member(
+            dao_id: DaoAssetId,
+            project_id: ProjectId,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let gindex: u64 = project_id.into();
+            let mut members = <ProjectMembers<T>>::try_get(dao_id, gindex).unwrap_or_default();
+            let index = members
+                .binary_search(&who)
+                .err()
+                .ok_or(Error::<T>::InVailCall)?;
+
+            members
+                .try_insert(index, who.clone())
+                .map_err(|_| Error::<T>::TooManyMembers)?;
+
+            <ProjectMembers<T>>::insert(dao_id, gindex, &members);
+
+            Ok(index)
+        }
+
+        /// 删除成员
+        pub fn try_remove_project_member(
+            dao_id: DaoAssetId,
+            project_id: ProjectId,
+            who: T::AccountId,
+        ) -> result::Result<usize, DispatchError> {
+            let gindex: u64 = project_id.into();
+            let mut members = <ProjectMembers<T>>::try_get(dao_id, gindex).unwrap_or_default();
+            let index = members
+                .binary_search(&who)
+                .ok()
+                .ok_or(Error::<T>::InVailCall)?;
+
+            members.remove(index);
+            <ProjectMembers<T>>::insert(dao_id, gindex, &members);
+
             Ok(index)
         }
     }

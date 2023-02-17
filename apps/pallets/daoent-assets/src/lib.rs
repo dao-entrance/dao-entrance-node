@@ -23,7 +23,7 @@ use orml_traits::{
 use scale_info::TypeInfo;
 
 use daoent_dao::{self as dao};
-use daoent_primitives::types::DaoAssetId;
+use daoent_primitives::types::{DaoAssetId, ProjectId};
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::{
@@ -202,8 +202,9 @@ pub mod pallet {
         pub fn create_asset(
             origin: OriginFor<T>,
             asset_id: DaoAssetId,
-            amount: BalanceOf<T>,
             metadata: Option<DaoAssetMeta>,
+            amount: BalanceOf<T>,
+            init_dao_asset: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             ensure!(
                 daoent_dao::Daos::<T>::contains_key(asset_id),
@@ -214,12 +215,18 @@ pub mod pallet {
             Self::do_create(user.clone(), asset_id, metadata, amount, false)?;
 
             // 将资金转入资金池B池
-            // <Self as MultiCurrency<T::AccountId>>::transfer(
             <Self as MultiCurrency<T::AccountId>>::transfer(
                 NATIVE_ASSET_ID,
                 &user,
                 &Self::dao_asset(asset_id),
                 amount,
+            )?;
+
+            // 初始化账户基本资产
+            <Self as MultiCurrency<T::AccountId>>::deposit(
+                asset_id,
+                &Self::dao_asset(asset_id),
+                init_dao_asset,
             )?;
 
             Ok(().into())
@@ -415,6 +422,12 @@ pub mod pallet {
         }
 
         /// 获取DAO账户
+        pub fn dao_project(dao_id: DaoAssetId, p_id: ProjectId) -> T::AccountId {
+            T::PalletId::get()
+                .into_sub_account_truncating(dao_id.to_string() + "PROJECT" + &p_id.to_string())
+        }
+
+        /// 获取DAO账户
         pub fn get_balance(
             asset_id: DaoAssetId,
             who: T::AccountId,
@@ -456,6 +469,22 @@ pub mod pallet {
             );
 
             <Self as MultiReservableCurrency<T::AccountId>>::unreserve(asset_id, &who, value);
+            Ok(())
+        }
+
+        /// 获取DAO账户
+        pub fn try_transfer(
+            asset_id: DaoAssetId,
+            from: T::AccountId,
+            to: T::AccountId,
+            value: BalanceOf<T>,
+        ) -> result::Result<(), DispatchError> {
+            ensure!(
+                Self::is_exists_metadata(asset_id),
+                Error::<T>::MetadataNotExists
+            );
+
+            <Self as MultiCurrency<T::AccountId>>::transfer(asset_id, &from, &to, value)?;
             Ok(())
         }
     }
