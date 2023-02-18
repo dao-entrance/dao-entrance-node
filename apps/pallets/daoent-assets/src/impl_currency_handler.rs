@@ -26,16 +26,13 @@ impl<T: Config>
                 }
             }
         };
-        match asset_info.metadata {
-            Some(x) => Ok(x),
-            None => Err(Error::<T>::MetadataNotExists)?,
-        }
+        Ok(asset_info.metadata)
     }
 
     fn do_create(
         user: T::AccountId,
         asset_id: DaoAssetId,
-        metadata: Option<DaoAssetMeta>,
+        metadata: DaoAssetMeta,
         amount: BalanceOf<T>,
         _is_swap_deposit: bool,
     ) -> DispatchResult {

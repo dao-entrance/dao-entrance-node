@@ -371,13 +371,9 @@ parameter_types! {
 
 pub struct DustRemovalWhitelist;
 impl Contains<AccountId> for DustRemovalWhitelist {
-    fn contains(a: &AccountId) -> bool {
-        get_all_module_accounts().contains(a)
+    fn contains(_a: &AccountId) -> bool {
+        false
     }
-}
-
-pub fn get_all_module_accounts() -> Vec<AccountId> {
-    vec![]
 }
 
 impl orml_tokens::Config for Runtime {
@@ -426,11 +422,12 @@ impl TryFrom<RuntimeCall> for CallId {
                 _ => Err(()),
             },
             RuntimeCall::DAOAsset(func) => match func {
-                daoent_assets::Call::create_asset { .. } => Ok(101 as CallId),
+                daoent_assets::Call::create_asset { .. } => Ok(201 as CallId),
                 _ => Err(()),
             },
             RuntimeCall::DAOGuild(func) => match func {
                 daoent_guild::Call::guild_join_request { .. } => Ok(301 as CallId),
+                daoent_guild::Call::create_guild { .. } => Ok(302 as CallId),
                 _ => Err(()),
             },
             // dao

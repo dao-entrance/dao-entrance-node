@@ -18,18 +18,18 @@ pub fn create_asset() -> DaoAssetId {
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),
         dao_id,
-        Some(daoent_assets::DaoAssetMeta {
+        daoent_assets::DaoAssetMeta {
             name: "TestA".as_bytes().to_vec(),
             symbol: "TA".as_bytes().to_vec(),
             decimals: 10,
-        }),
+        },
         10000,
         99,
     )
     .unwrap();
 
     let proposal = RuntimeCall::DAOAsset(daoent_assets::Call::set_existenial_deposit {
-        asset_id: dao_id,
+        dao_id: dao_id,
         existenial_deposit: 1,
     });
 

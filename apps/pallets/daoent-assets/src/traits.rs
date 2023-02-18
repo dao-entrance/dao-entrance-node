@@ -13,7 +13,7 @@ pub trait CurrenciesHandler<
     fn do_create(
         user: AccountId,
         currency_id: CurrencyId,
-        metadata: Option<DicoAssetMetadata>,
+        metadata: DicoAssetMetadata,
         amount: Balance,
         is_swap_deposit: bool,
     ) -> DispatchResult;

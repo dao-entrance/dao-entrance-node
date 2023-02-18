@@ -7,6 +7,161 @@
 
 - Connect to `development node --> local node`
 
-<img src="images/Screenshot from 2023-02-18 08-30-26.png" width="400" style="padding-left: 50px;">
+<img src="images/Screenshot from 2023-02-18 08-30-26.png" width="500" style="padding-left: 50px;">
 
-- From the list of available extrinsics select dao --> createDao callable
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select dao --> createDao callable 
+
+<img src="images/火狐截图_2023-02-18T01-43-45.864Z.png" width="500" style="padding-left: 50px;">
+
+- Submit Transaction --> DAO successfully created
+
+- Go to Developer --> Chain State
+
+- Select dao --> daos for state query and press + button
+
+<img src="images/Screenshot from 2023-02-18 08-48-31.png" width="500" style="padding-left: 50px;">
+
+## Create a asset for DAO
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoAsset --> createAsset callable 
+- input dao id 1
+- input DaoentAssetsDaoAssetMeta.name mytoken
+- input DaoentAssetsDaoAssetMeta.symbol  t
+- input DaoentAssetsDaoAssetMeta.decimals  100
+- input amount 10000
+- input initDaoAsset 1000000
+- Submit Transaction --> Asset successfully created
+
+<img src="images/火狐截图_2023-02-18T01-38-21.298Z.png" width="500" style="padding-left: 50px;">
+
+## Create a DAO guild with gov
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoGov --> createPropose callable 
+- input dao id 1
+- select memberData GLOBAL
+- From the list of available proposal: Call (RuntimeCall) select daoGuild --> createGuild callable 
+- input dao id 1
+- input name and desc and metaData
+- Submit Transaction --> guild propose successfully created，after the DAO is approved by an internal vote, it can be created
+
+<img src="images/火狐截图_2023-02-18T02-17-12.486Z.png" width="500" style="padding-left: 50px;">
+
+## Create a DAO project with gov
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoGov --> createPropose callable 
+- input dao id 1
+- select memberData GLOBAL
+- From the list of available proposal: Call (RuntimeCall) select daoGuild --> createGuild callable 
+- input dao id 1
+- input name and desc and metaData creator
+- Submit Transaction --> project propose successfully created, after the DAO is approved by an internal vote, it can be created
+
+<img src="images/火狐截图_2023-02-18T02-29-18.163Z.png" width="500" style="padding-left: 50px;">
+
+## Create a DAO guild with sudo
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoSudo --> sudo callable 
+- input dao id 1
+- From the list of available proposal: Call (RuntimeCall) select daoGuild --> createGuild callable 
+- input dao id 1
+- input name and desc and metaData
+- Submit Transaction --> guild successfully created
+
+<img src="images/火狐截图_2023-02-18T03-17-44.617Z.png" width="500" style="padding-left: 50px;">
+
+## Create a DAO project with sudo
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoSudo --> sudo callable 
+- input dao id 1
+- From the list of available proposal: Call (RuntimeCall) select daoGuild --> createGuild callable 
+- input dao id 1
+- input name and desc and metaData creator
+- Submit Transaction --> project propose successfully created
+
+<img src="images/火狐截图_2023-02-18T02-29-18.163Z.png" width="500" style="padding-left: 50px;">
+
+## Apply fund for project with sudo
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoSudo --> sudo callable 
+- input dao id 1
+- From the list of available proposal: Call (RuntimeCall) select daoGuild --> applyProjectFunds callable 
+- input dao id 1
+- input project id 1
+- input amount
+- Submit Transaction --> project will get token
+
+<img src="images/火狐截图_2023-02-18T03-45-56.920Z.png" width="500" style="padding-left: 50px;">
+
+## Create project task 
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> createTask 
+- input dao id 1
+- input project id 1
+- input name and desc and point priority
+- Submit Transaction --> project task successfully created
+
+<img src="images/火狐截图_2023-02-18T03-36-31.707Z.png" width="500" style="padding-left: 50px;">
+
+## join project task as reviewer
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> beTaskReview 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> project task successfully start
+
+<img src="images/火狐截图_2023-02-18T04-16-24.622Z.png" width="500" style="padding-left: 50px;">
+
+## join project task as assignee
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> joinTask 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> project task successfully start
+
+<img src="images/火狐截图_2023-02-18T04-24-16.236Z.png" width="500" style="padding-left: 50px;">
+
+
+## Start project task 
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> startTask 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> project task successfully created
+
+<img src="images/火狐截图_2023-02-18T03-47-49.440Z.png" width="500" style="padding-left: 50px;">
+
+
+## Project task requset review
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> requsetReview 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> requset for reviewer to review
+
+<img src="images/火狐截图_2023-02-18T04-27-57.514Z.png" width="500" style="padding-left: 50px;">
+
+## Reviewer make task review
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> requsetReview 
+- input dao id 1
+- input project id 1
+- input task id 1
+- DaoentProjectReviewOpinion option select YES
+- Submit Transaction --> review successfully created
+
+<img src="images/火狐截图_2023-02-18T04-31-50.603Z.png" width="500" style="padding-left: 50px;">
+
+## Project task done
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> requsetReview 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> requset for reviewer to review
+
+<img src="images/火狐截图_2023-02-18T04-34-16.726Z.png" width="500" style="padding-left: 50px;">

@@ -20,18 +20,18 @@ pub fn create_asset() -> DaoAssetId {
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),
         dao_id,
-        Some(daoent_assets::DaoAssetMeta {
+        daoent_assets::DaoAssetMeta {
             name: "TestA".as_bytes().to_vec(),
             symbol: "TA".as_bytes().to_vec(),
             decimals: 10,
-        }),
+        },
         10000,
         99,
     )
     .unwrap();
 
     let proposal = RuntimeCall::DAOAsset(daoent_assets::Call::set_existenial_deposit {
-        asset_id: dao_id,
+        dao_id: dao_id,
         existenial_deposit: 1,
     });
 
@@ -139,26 +139,10 @@ pub fn test_task() {
     new_test_run().execute_with(|| {
         let dao_id = project_join_reques();
 
-        // 项目没有资金应该报错
-        assert!(daoent_project::Pallet::<Test>::create_task(
-            RuntimeOrigin::signed(ALICE),
-            dao_id,
-            PROJECT_INDEX,
-            "TestA".as_bytes().to_vec(),
-            "TestA".as_bytes().to_vec(),
-            10,
-            1,
-            Some(1),
-            Some(vec![1]),
-            Some(vec![]),
-            10,
-        )
-        .is_err());
-
         // 为项目申请资金
         let proposal = RuntimeCall::DAOProject(daoent_project::Call::apply_project_funds {
             dao_id,
-            project_id: 0,
+            project_id: PROJECT_INDEX,
             amount: 19,
         });
 

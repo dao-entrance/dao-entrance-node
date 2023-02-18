@@ -157,8 +157,8 @@ parameter_type_with_key! {
 
 pub struct MockDustRemovalWhitelist;
 impl Contains<AccountId> for MockDustRemovalWhitelist {
-    fn contains(a: &AccountId) -> bool {
-        *a == ALICE
+    fn contains(_a: &AccountId) -> bool {
+        false
     }
 }
 
