@@ -571,7 +571,7 @@ pub mod pallet {
             let now = Self::now();
             let mut vote_weight = BalanceOf::<T>::from(0u32);
 
-            // 检查用户是否已经参与了投票
+            // 检查用户是否已经参与了投票，只能投票一次
             let votes = VotesOf::<T>::get(&who);
             votes
                 .binary_search_by(|v| v.referendum_index.cmp(&referendum_index))

@@ -10,6 +10,9 @@ This repository is for the submission of milestone 1 of the Web 3 Foundation Gra
 ### Run Node
 If you want to see the final running effect, you can just click [run node](./docs/run-node.md) and see it. You can also check out the code integration documentation below
 
+### Run Docker
+If you want to see the final running effect, you can just click [run node](./docs/run-docker.md) and see it. You can also check out the code integration documentation below
+
 
 ### introduction to Substrate pallets
 We provide pallets to make it easier for create a DAO based on substrate.
