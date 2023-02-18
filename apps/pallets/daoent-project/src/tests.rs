@@ -102,7 +102,6 @@ pub fn project_join_reques() -> DaoAssetId {
         dao_id,
         0u32,
         Vote(100000),
-        (),
         daoent_gov::Opinion::YES,
     ));
 

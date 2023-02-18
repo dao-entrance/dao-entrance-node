@@ -318,16 +318,23 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
         &self,
         who: &AccountId,
         dao_id: &DaoAssetId,
-        conviction: &(),
+        vote_model: u8,
     ) -> Result<(Balance, BlockNumber), DispatchError> {
         if cfg!(any(feature = "std", feature = "runtime-benchmarks", test)) {
             return Ok((Default::default(), Default::default()));
         }
 
+        let mut amount: u128 = 0;
         match self {
             Pledge::FungToken(x) => {
                 DAOAsset::reserve(dao_id.clone(), who.clone(), *x)?;
-                let amount = *x;
+                if (vote_model == 1) {
+                    // 1 account = 1 vote
+                    amount = 1;
+                } else {
+                    // 1 token = 1 vote
+                    amount = *x;
+                }
                 return Ok((
                     amount
                         .checked_mul(conviction.convert_into())
@@ -356,7 +363,6 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
 impl daoent_gov::Config for Runtime {
     type RuntimeEvent = RuntimeEvent;
     type Pledge = Pledge<Balance>;
-    type Conviction = ();
     type WeightInfo = ();
 }
 
@@ -430,7 +436,24 @@ impl TryFrom<RuntimeCall> for CallId {
                 daoent_guild::Call::create_guild { .. } => Ok(302 as CallId),
                 _ => Err(()),
             },
-            // dao
+            RuntimeCall::DAOGov(func) => match func {
+                daoent_gov::Call::create_propose { .. } => Ok(401 as CallId),
+                daoent_gov::Call::recreate { .. } => Ok(402 as CallId),
+                daoent_gov::Call::start_referendum { .. } => Ok(403 as CallId),
+                daoent_gov::Call::vote_for_referendum { .. } => Ok(404 as CallId),
+                daoent_gov::Call::cancel_vote { .. } => Ok(405 as CallId),
+                daoent_gov::Call::run_proposal { .. } => Ok(406 as CallId),
+                daoent_gov::Call::unlock { .. } => Ok(407 as CallId),
+                daoent_gov::Call::set_min_vote_weight_for_every_call { .. } => Ok(408 as CallId),
+                daoent_gov::Call::set_max_public_props { .. } => Ok(409 as CallId),
+                daoent_gov::Call::set_launch_period { .. } => Ok(410 as CallId),
+                daoent_gov::Call::set_minimum_deposit { .. } => Ok(411 as CallId),
+                daoent_gov::Call::set_voting_period { .. } => Ok(412 as CallId),
+                daoent_gov::Call::set_rerserve_period { .. } => Ok(413 as CallId),
+                daoent_gov::Call::set_runment_period { .. } => Ok(414 as CallId),
+                daoent_gov::Call::update_vote_model { .. } => Ok(415 as CallId),
+                _ => Err(()),
+            },
             RuntimeCall::DAOProject(func) => match func {
                 daoent_project::Call::project_join_request { .. } => Ok(501 as CallId),
                 daoent_project::Call::create_project { .. } => Ok(502 as CallId),

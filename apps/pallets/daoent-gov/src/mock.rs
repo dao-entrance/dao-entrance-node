@@ -5,7 +5,7 @@ use crate as daoent_gov;
 use crate::PledgeTrait;
 use codec::{Decode, Encode, MaxEncodedLen};
 use daoent_assets::asset_adaper_in_pallet::BasicCurrencyAdapter;
-use daoent_primitives::types::DaoAssetId;
+use daoent_primitives::types::{CallId, DaoAssetId};
 use frame_support::{
     parameter_types,
     traits::{ConstU16, ConstU32, ConstU64, Contains},
@@ -28,6 +28,11 @@ type Amount = i128;
 type Balance = u64;
 pub type BlockNumber = u64;
 pub type AccountId = u64;
+
+pub const ALICE: u64 = 1;
+pub const BOB: u64 = 2;
+pub const DAO_ID: u64 = 1;
+pub const P_ID: u32 = 0;
 
 parameter_types! {
     pub const DaoPalletId: PalletId = PalletId(*b"ent--dao");
@@ -113,11 +118,29 @@ impl orml_tokens::Config for Test {
     type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
-impl TryFrom<RuntimeCall> for u64 {
+impl TryFrom<RuntimeCall> for CallId {
     type Error = ();
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
         match call {
-            _ => Ok(0u64),
+            RuntimeCall::DAOGov(func) => match func {
+                daoent_gov::Call::create_propose { .. } => Ok(401 as CallId),
+                daoent_gov::Call::recreate { .. } => Ok(402 as CallId),
+                daoent_gov::Call::start_referendum { .. } => Ok(403 as CallId),
+                daoent_gov::Call::vote_for_referendum { .. } => Ok(404 as CallId),
+                daoent_gov::Call::cancel_vote { .. } => Ok(405 as CallId),
+                daoent_gov::Call::run_proposal { .. } => Ok(406 as CallId),
+                daoent_gov::Call::unlock { .. } => Ok(407 as CallId),
+                daoent_gov::Call::set_min_vote_weight_for_every_call { .. } => Ok(408 as CallId),
+                daoent_gov::Call::set_max_public_props { .. } => Ok(409 as CallId),
+                daoent_gov::Call::set_launch_period { .. } => Ok(410 as CallId),
+                daoent_gov::Call::set_minimum_deposit { .. } => Ok(411 as CallId),
+                daoent_gov::Call::set_voting_period { .. } => Ok(412 as CallId),
+                daoent_gov::Call::set_rerserve_period { .. } => Ok(413 as CallId),
+                daoent_gov::Call::set_runment_period { .. } => Ok(414 as CallId),
+                daoent_gov::Call::update_vote_model { .. } => Ok(415 as CallId),
+                _ => Err(()),
+            },
+            _ => Err(()),
         }
     }
 }
@@ -138,7 +161,7 @@ impl daoent_dao::Config for Test {
     type PalletId = DaoPalletId;
     type RuntimeEvent = RuntimeEvent;
     type RuntimeCall = RuntimeCall;
-    type CallId = u64;
+    type CallId = CallId;
     type AfterCreate = ();
     type WeightInfo = ();
     type MaxMembers = ConstU32<1000000>;
@@ -167,7 +190,7 @@ impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
         &self,
         _who: &AccountId,
         _dao_id: &u64,
-        _conviction: &(),
+        vote_model: u8,
     ) -> Result<(u64, u64), DispatchError> {
         Ok((100u64, 100u64))
     }
@@ -193,10 +216,12 @@ pub fn new_test_run() -> sp_io::TestExternalities {
     let mut t = frame_system::GenesisConfig::default()
         .build_storage::<Test>()
         .unwrap();
+
     pallet_balances::GenesisConfig::<Test> {
-        balances: vec![(1, 10), (2, 10), (3, 10), (10, 100), (20, 100), (30, 100)],
+        balances: vec![(ALICE, 100000), (BOB, 10000), (103, 10)],
     }
     .assimilate_storage(&mut t)
     .unwrap();
+
     t.into()
 }

@@ -6,24 +6,31 @@ use frame_support::assert_ok;
 use mock::{RuntimeCall, RuntimeOrigin, *};
 use sp_runtime::traits::BlakeTwo256;
 
-pub const ALICE: u64 = 1;
-pub const BOB: u64 = 2;
-pub const DAO_ID: u64 = 1;
-pub const P_ID: u32 = 1;
-
 pub fn create_dao() {
     daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![])
         .unwrap();
+
+    daoent_assets::Pallet::<Test>::create_asset(
+        RuntimeOrigin::signed(ALICE),
+        DAO_ID,
+        daoent_assets::DaoAssetMeta {
+            name: "TestA".as_bytes().to_vec(),
+            symbol: "TA".as_bytes().to_vec(),
+            decimals: 10,
+        },
+        10000,
+        99,
+    )
+    .unwrap();
 }
 
 pub fn propose() {
     create_dao();
-    frame_system::Pallet::<Test>::set_block_number(10000);
     assert!(Pallet::<Test>::start_referendum(RuntimeOrigin::signed(ALICE), DAO_ID, P_ID).is_err());
     frame_system::Pallet::<Test>::set_block_number(0);
     let proposal = RuntimeCall::DAOGov(Call::set_min_vote_weight_for_every_call {
         dao_id: DAO_ID,
-        call_id: 0u64,
+        call_id: 0,
         min_vote_weight: 100u64,
     });
     assert_ok!(Pallet::<Test>::create_propose(
@@ -62,32 +69,22 @@ pub fn vote() {
         DAO_ID,
         0u32,
         Vote(100u64),
-        (),
         Opinion::YES,
     ));
-    assert_ok!(Pallet::<Test>::vote_for_referendum(
+    assert!(Pallet::<Test>::vote_for_referendum(
         RuntimeOrigin::signed(ALICE),
         DAO_ID,
         0u32,
         Vote(100u64),
-        (),
         Opinion::YES,
-    ));
-    assert_ok!(Pallet::<Test>::vote_for_referendum(
-        RuntimeOrigin::signed(ALICE),
-        DAO_ID,
-        0u32,
-        Vote(100u64),
-        (),
-        Opinion::NO,
-    ));
+    )
+    .is_err());
     frame_system::Pallet::<Test>::set_block_number(20000);
     assert!(Pallet::<Test>::vote_for_referendum(
         RuntimeOrigin::signed(ALICE),
         DAO_ID,
         0u32,
         Vote(100u64),
-        (),
         Opinion::NO,
     )
     .is_err());
@@ -103,10 +100,10 @@ pub fn run() {
     assert!(Pallet::<Test>::run_proposal(RuntimeOrigin::signed(ALICE), DAO_ID, 0u32).is_err());
     frame_system::Pallet::<Test>::set_block_number(20000);
 
-    let ole_min_weight = MinVoteWeightOf::<Test>::get(0u64, 0u64);
-    MinVoteWeightOf::<Test>::insert(0u64, 0u64, 10000000000);
+    let ole_min_weight = MinVoteWeightOf::<Test>::get(0u64, 0);
+    MinVoteWeightOf::<Test>::insert(0u64, 0, 10000000000);
     assert!(Pallet::<Test>::run_proposal(RuntimeOrigin::signed(ALICE), 0u64, 0u32).is_err());
-    MinVoteWeightOf::<Test>::insert(0u64, 0u64, ole_min_weight);
+    MinVoteWeightOf::<Test>::insert(0u64, 0, ole_min_weight);
 
     assert_ok!(Pallet::<Test>::run_proposal(
         RuntimeOrigin::signed(ALICE),
@@ -119,7 +116,6 @@ pub fn run() {
         DAO_ID,
         0u32,
         Vote(100u64),
-        (),
         Opinion::NO,
     )
     .is_err());

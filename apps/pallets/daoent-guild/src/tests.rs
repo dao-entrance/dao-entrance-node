@@ -98,7 +98,6 @@ pub fn test_guild_join_request() {
             dao_id,
             0u32,
             Vote(100000),
-            (),
             daoent_gov::Opinion::YES,
         ));
 

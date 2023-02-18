@@ -88,7 +88,7 @@ impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
         &self,
         _who: &AccountId,
         _dao_id: &u64,
-        _conviction: &(),
+        _vote_model: u8,
     ) -> Result<(u64, u64), DispatchError> {
         Ok((100u64, 100u64))
     }

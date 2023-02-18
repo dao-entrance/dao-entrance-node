@@ -298,6 +298,11 @@ pub mod pallet {
     pub type ReferendumCount<T: Config> =
         StorageMap<_, Identity, DaoAssetId, ReferendumIndex, ValueQuery>;
 
+    /// DAO 投票模式默认 0，1 TOKEN 1 票
+    #[pallet::storage]
+    #[pallet::getter(fn vote_model)]
+    pub type VoteModel<T: Config> = StorageMap<_, Identity, DaoAssetId, u8, ValueQuery>;
+
     /// Everyone's voting information.
     #[pallet::storage]
     #[pallet::getter(fn votes_of)]
@@ -348,7 +353,10 @@ pub mod pallet {
         /// Set Origin for each Call.
         SetMinVoteWeight(DaoAssetId, T::CallId, BalanceOf<T>),
         /// Set the maximum number of proposals at the same time.
-        SetMaxPublicProps { dao_id: DaoAssetId, max: u32 },
+        SetMaxPublicProps {
+            dao_id: DaoAssetId,
+            max: u32,
+        },
         /// Set the referendum interval.
         SetLaunchPeriod {
             dao_id: DaoAssetId,
@@ -373,6 +381,10 @@ pub mod pallet {
         SetEnactmentPeriod {
             dao_id: DaoAssetId,
             period: T::BlockNumber,
+        },
+        VoteModelUpdate {
+            dao_id: DaoAssetId,
+            model: u8,
         },
     }
 
@@ -399,6 +411,8 @@ pub mod pallet {
         InDelayTime,
         /// Referendum voting has ended.
         VoteEnd,
+        /// 宠物投票
+        VoteRedundancy,
         /// Voting closed but proposal rejected.
         VoteEndButNotPass,
         /// It's not time to open a new referendum.
@@ -522,6 +536,10 @@ pub mod pallet {
 
             // 获取提案
             let mut public_props = Self::public_props(dao_id);
+            ensure!(
+                public_props.len() > propose_index.try_into().unwrap(),
+                Error::<T>::NotTableTime
+            );
             let (prop_index, _, proposal, _, _) =
                 public_props.swap_remove(propose_index.try_into().unwrap());
             <PublicProps<T>>::insert(dao_id, public_props);
@@ -556,12 +574,18 @@ pub mod pallet {
             dao_id: DaoAssetId,
             referendum_index: ReferendumIndex,
             pledge: T::Pledge,
-            conviction: T::Conviction,
             opinion: Opinion,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
             let now = Self::now();
             let mut vote_weight = BalanceOf::<T>::from(0u32);
+
+            // 检查用户是否已经参与了投票
+            let votes = VotesOf::<T>::get(&who);
+            votes
+                .binary_search_by(|v| v.referendum_index.cmp(&referendum_index))
+                .err()
+                .ok_or(Error::<T>::VoteRedundancy)?;
 
             ReferendumInfoOf::<T>::try_mutate_exists(
                 dao_id,
@@ -570,8 +594,8 @@ pub mod pallet {
                     let mut info = h.take().ok_or(Error::<T>::ReferendumNotExists)?;
                     if let ReferendumInfo::Ongoing(ref mut x) = info {
                         if x.end > now {
-                            // let asset_id = daoent_dao::Pallet::<T>::try_get_asset_id(dao_id)?;
-                            let vote_result = pledge.try_vote(&who, &dao_id, &conviction)?;
+                            let vote_model = <VoteModel<T>>::try_get(dao_id).unwrap_or_default();
+                            let vote_result = pledge.try_vote(&who, &dao_id, vote_model)?;
                             vote_weight = vote_result.0;
 
                             let duration = vote_result.1;
@@ -891,6 +915,22 @@ pub mod pallet {
 
             EnactmentPeriod::<T>::insert(dao_id, period);
             Self::deposit_event(Event::<T>::SetEnactmentPeriod { dao_id, period });
+
+            Ok(().into())
+        }
+
+        #[pallet::call_index(015)]
+        #[pallet::weight(1500_000_000)]
+        pub fn update_vote_model(
+            origin: OriginFor<T>,
+            dao_id: DaoAssetId,
+            model: u8,
+        ) -> DispatchResultWithPostInfo {
+            let me = ensure_signed(origin)?;
+            daoent_dao::Pallet::<T>::ensrue_dao_root(me.clone(), dao_id)?;
+
+            <VoteModel<T>>::insert(dao_id, model);
+            Self::deposit_event(Event::<T>::VoteModelUpdate { dao_id, model });
 
             Ok(().into())
         }

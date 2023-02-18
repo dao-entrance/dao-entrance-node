@@ -5,7 +5,7 @@ pub trait PledgeTrait<VoteWeight, AccountId, DaoId, Convivtion, BlockNumber, Dis
         &self,
         who: &AccountId,
         dao_id: &DaoId,
-        conviction: &Convivtion,
+        vote_model: u8,
     ) -> result::Result<(VoteWeight, BlockNumber), DispatchError>;
     fn vote_end_do(&self, who: &AccountId, dao_id: &DaoId) -> result::Result<(), DispatchError>;
 }

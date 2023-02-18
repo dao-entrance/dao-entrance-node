@@ -142,18 +142,6 @@ pub mod pallet {
         #[pallet::constant]
         type PalletId: Get<PalletId>;
 
-        /// The specific group on the chain mapped by DAO
-        /// 资产
-        // type AssetId: Parameter
-        //     + Member
-        //     + TypeInfo
-        //     + MaxEncodedLen
-        //     + Clone
-        //     + Copy
-        //     + Default
-        //     + AccountIdType<Self::AccountId>
-        //     + BaseCallFilter<<Self as pallet::Config>::RuntimeCall>;
-
         /// Do some things after creating dao, such as setting up a sudo account.
         /// 创建DAO之后的回调
         type AfterCreate: AfterCreate<Self::AccountId>;
