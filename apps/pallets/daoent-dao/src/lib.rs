@@ -418,12 +418,6 @@ pub mod pallet {
             Ok(guild.clone())
         }
 
-        /// 获取扩展 id
-        // pub fn try_get_asset_id(dao_id: DaoAssetId) -> result::Result<DispatchError> {
-        //     let dao = Daos::<T>::get(dao_id).ok_or(Error::<T>::DaoNotExists)?;
-        //     Ok(dao.asset_id)
-        // }
-
         /// 获取 DAO 账户ID
         pub fn try_get_dao_account_id(
             dao_id: DaoAssetId,
