@@ -21,12 +21,12 @@ We provide pallets to make it easier for create a DAO based on substrate.
 
 We provide the following pallets: 
 > Click on the pallet name to view the api 
- - [daoent-dao](./pallets/daoent-dao/README.md) pallet is a basic DAO module through which you can create a DAO.
- - [daoent-assets](./pallets/daoent-assets/README.md) pallet is a TOKEN management module specially designed for DAO, through which it can manage the native tokens of DAO on the chain and issue the organization tokens.
- - [daoent-sudo](./pallets/daoent-sudo/README.md) pallet is for the early DAO, which requires the core team to quickly adjust various parameters. After the organization is stable, this module will be disabled.
- - [daoent-gov](./pallets/daoent-gov/README.md) pallet is a governance module specially designed for DAO. Through this module, DAO members can conduct global voting, intra-guild voting and intra-project voting to achieve the purpose of intra-organization governance.
- - [daoent-guild](./pallets/daoent-guild/README.md) pallet is designed to organize the internal talent pool, and each guild will gather different groups of people.
- - [daoent-project](./pallets/daoent-project/README.md) pallet allows the DAO to run multiple projects at the same time, and each project team has multiple members from various guilds.
+ - [daoent-dao](./apps/pallets/daoent-dao/README.md) pallet is a basic DAO module through which you can create a DAO.
+ - [daoent-assets](./apps/pallets/daoent-assets/README.md) pallet is a TOKEN management module specially designed for DAO, through which it can manage the native tokens of DAO on the chain and issue the organization tokens.
+ - [daoent-sudo](./apps/pallets/daoent-sudo/README.md) pallet is for the early DAO, which requires the core team to quickly adjust various parameters. After the organization is stable, this module will be disabled.
+ - [daoent-gov](./apps/pallets/daoent-gov/README.md) pallet is a governance module specially designed for DAO. Through this module, DAO members can conduct global voting, intra-guild voting and intra-project voting to achieve the purpose of intra-organization governance.
+ - [daoent-guild](./apps/pallets/daoent-guild/README.md) pallet is designed to organize the internal talent pool, and each guild will gather different groups of people.
+ - [daoent-project](./apps/pallets/daoent-project/README.md) pallet allows the DAO to run multiple projects at the same time, and each project team has multiple members from various guilds.
 
 ### Integration step
 #### 1. Add [dependencies] to Cargo.toml
