@@ -51,7 +51,6 @@ pub use sp_runtime::{Perbill, Permill};
 
 use codec::MaxEncodedLen;
 use daoent_assets::{self as daoent_assets, asset_adaper_in_pallet::BasicCurrencyAdapter};
-use daoent_gov::traits::ConvertInto;
 use daoent_gov::traits::PledgeTrait;
 use daoent_primitives::{
     traits::AfterCreate,
@@ -311,9 +310,7 @@ impl Default for Pledge<Balance> {
         Pledge::FungToken(0)
     }
 }
-impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
-    for Pledge<Balance>
-{
+impl PledgeTrait<Balance, AccountId, DaoAssetId, BlockNumber, DispatchError> for Pledge<Balance> {
     fn try_vote(
         &self,
         who: &AccountId,
@@ -324,24 +321,19 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, (), BlockNumber, DispatchError>
             return Ok((Default::default(), Default::default()));
         }
 
-        let mut amount: u128 = 0;
         match self {
             Pledge::FungToken(x) => {
                 DAOAsset::reserve(dao_id.clone(), who.clone(), *x)?;
-                if (vote_model == 1) {
+                let mut amount: u128 = 0;
+                if vote_model == 1 {
                     // 1 account = 1 vote
                     amount = 1;
                 } else {
                     // 1 token = 1 vote
                     amount = *x;
                 }
-                return Ok((
-                    amount
-                        .checked_mul(conviction.convert_into())
-                        .ok_or(daoent_gov::Error::<Runtime>::Overflow)?,
-                    conviction.convert_into(),
-                ));
-            }
+                return Ok((amount, 100));
+            } // _ => Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?,
         }
         // Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
     }

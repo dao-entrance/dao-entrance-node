@@ -154,18 +154,9 @@ pub mod pallet {
                 BalanceOf<Self>,
                 Self::AccountId,
                 DaoAssetId,
-                Self::Conviction,
                 Self::BlockNumber,
                 DispatchError,
             >;
-
-        /// The number of times the vote is magnified.
-        type Conviction: Clone
-            + Default
-            + Copy
-            + Parameter
-            + ConvertInto<Self::BlockNumber>
-            + ConvertInto<BalanceOf<Self>>;
 
         /// Weight information for extrinsics in this pallet.
         type WeightInfo: WeightInfo;

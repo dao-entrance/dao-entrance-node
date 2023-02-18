@@ -81,7 +81,7 @@ impl frame_system::Config for Test {
 )]
 pub struct Vote(pub AccountId);
 
-impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
+impl PledgeTrait<u64, AccountId, u64, u64, DispatchError> for Vote {
     fn try_vote(
         &self,
         _who: &AccountId,
@@ -99,7 +99,6 @@ impl PledgeTrait<u64, AccountId, u64, (), u64, DispatchError> for Vote {
 impl daoent_gov::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type Pledge = Vote;
-    type Conviction = ();
     type WeightInfo = ();
 }
 
