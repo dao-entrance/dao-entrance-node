@@ -114,6 +114,8 @@ pub struct ReferendumStatus<BlockNumber, Call, Balance> {
     /// The current tally of votes in this referendum.
     /// 投票统计
     pub tally: Tally<Balance>,
+
+    pub member_data: MemmberData<u64>,
 }
 
 /// Info regarding a referendum, present or past.
@@ -429,8 +431,12 @@ pub mod pallet {
             #[pallet::compact] value: BalanceOf<T>,
         ) -> DispatchResultWithPostInfo {
             let who = ensure_signed(origin)?;
-            Self::check_auth_for_proposal(dao_id, who.clone())?;
+            // Self::check_auth_for_proposal(dao_id, who.clone())?;
 
+            // 确认用户属于可提案的用户范围
+            Self::check_auth_for_vote(dao_id, member_data.clone(), who.clone())?;
+
+            // 确认当前函数为 sudo/gov 可调用函数
             let call_id: T::CallId =
                 TryFrom::<<T as daoent_dao::Config>::RuntimeCall>::try_from(*proposal.clone())
                     .unwrap_or_default();
@@ -513,7 +519,8 @@ pub mod pallet {
             dao_id: DaoAssetId,
             propose_index: u32,
         ) -> DispatchResultWithPostInfo {
-            let _ = ensure_signed(origin)?;
+            let who = ensure_signed(origin)?;
+
             let tag = LaunchTag::<T>::get(dao_id);
             let now = Self::now();
             let dao_start_time = daoent_dao::Pallet::<T>::try_get_dao(dao_id)?.start_block;
@@ -531,9 +538,12 @@ pub mod pallet {
                 public_props.len() > propose_index.try_into().unwrap(),
                 Error::<T>::NotTableTime
             );
-            let (prop_index, _, proposal, _, _) =
+            let (prop_index, _, proposal, member_data, _) =
                 public_props.swap_remove(propose_index.try_into().unwrap());
             <PublicProps<T>>::insert(dao_id, public_props);
+
+            // 确认用户属于可提案的用户范围
+            Self::check_auth_for_vote(dao_id, member_data.clone(), who.clone())?;
 
             // 获取抵押
             let mut referendum_index: Option<ReferendumIndex> = None;
@@ -544,6 +554,7 @@ pub mod pallet {
                     proposal,
                     now.saturating_add(VotingPeriod::<T>::get(dao_id)),
                     EnactmentPeriod::<T>::get(dao_id),
+                    member_data,
                 ));
             }
 
@@ -584,6 +595,9 @@ pub mod pallet {
                 |h| -> result::Result<(), DispatchError> {
                     let mut info = h.take().ok_or(Error::<T>::ReferendumNotExists)?;
                     if let ReferendumInfo::Ongoing(ref mut x) = info {
+                        // 确认用户属于可投票的用户范围
+                        Self::check_auth_for_vote(dao_id, x.member_data.clone(), who.clone())?;
+
                         if x.end > now {
                             let vote_model = <VoteModel<T>>::try_get(dao_id).unwrap_or_default();
                             let vote_result = pledge.try_vote(&who, &dao_id, vote_model)?;
@@ -982,6 +996,7 @@ impl<T: Config> Pallet<T> {
         proposal: <T as daoent_dao::Config>::RuntimeCall,
         end: T::BlockNumber,
         delay: T::BlockNumber,
+        member_data: MemmberData<u64>,
     ) -> ReferendumIndex {
         let ref_index = Self::referendum_count(dao_id);
         ReferendumCount::<T>::insert(dao_id, ref_index + 1);
@@ -990,6 +1005,7 @@ impl<T: Config> Pallet<T> {
             proposal,
             delay,
             tally: Default::default(),
+            member_data,
         };
 
         let item = ReferendumInfo::Ongoing(status);
