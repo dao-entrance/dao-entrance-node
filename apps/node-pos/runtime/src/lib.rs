@@ -324,15 +324,14 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, BlockNumber, DispatchError> for
         match self {
             Pledge::FungToken(x) => {
                 DAOAsset::reserve(dao_id.clone(), who.clone(), *x)?;
-                let mut amount: u128 = 0;
                 if vote_model == 1 {
                     // 1 account = 1 vote
-                    amount = 1;
-                } else {
-                    // 1 token = 1 vote
-                    amount = *x;
+                    let amount = 1;
+                    return Ok((amount, 100));
                 }
-                return Ok((amount, 100));
+                // 1 token = 1 vote
+                let amount = *x;
+                Ok((amount, 100))
             } // _ => Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?,
         }
         // Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
