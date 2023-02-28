@@ -7,8 +7,13 @@ use mock::{RuntimeCall, RuntimeOrigin, *};
 use sp_runtime::traits::BlakeTwo256;
 
 pub fn create_dao() {
-    daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![])
-        .unwrap();
+    daoent_dao::Pallet::<Test>::create_dao(
+        RuntimeOrigin::signed(ALICE),
+        vec![1; 4],
+        vec![1; 4],
+        vec![],
+    )
+    .unwrap();
 
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),

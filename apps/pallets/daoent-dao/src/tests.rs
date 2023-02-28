@@ -7,18 +7,28 @@ use frame_support::{assert_noop, assert_ok, debug, log::debug};
 pub const ALICE: u64 = 1;
 
 pub fn create_dao() {
-    Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![1; 4]).unwrap();
+    Pallet::<Test>::create_dao(
+        RuntimeOrigin::signed(ALICE),
+        vec![1; 4],
+        vec![1; 4],
+        vec![1; 4],
+    )
+    .unwrap();
 }
 
 #[test]
 pub fn create_dao_should_work() {
     new_test_run().execute_with(|| {
-        assert!(
-            Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 60], vec![1; 4])
-                .is_err()
-        );
+        assert!(Pallet::<Test>::create_dao(
+            RuntimeOrigin::signed(ALICE),
+            vec![1; 4],
+            vec![1; 60],
+            vec![1; 4]
+        )
+        .is_err());
         assert_ok!(Pallet::<Test>::create_dao(
             RuntimeOrigin::signed(ALICE),
+            vec![1; 4],
             vec![1; 4],
             vec![1; 4]
         ));

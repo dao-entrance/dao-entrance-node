@@ -8409,6 +8409,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "wetee"
+version = "1.0.0"
+dependencies = [
+ "daoent-dao",
+ "daoent-primitives",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
 name = "which"
 version = "4.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

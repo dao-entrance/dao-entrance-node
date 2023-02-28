@@ -51,6 +51,9 @@ pub struct DaoInfo<AccountId, BlockNumber, Status> {
     /// DAO account id.
     /// DAO 链上账户ID
     pub dao_account_id: AccountId,
+    /// name of the DAO.
+    /// DAO 名字
+    pub name: Vec<u8>,
     /// Purpose of the DAO.
     /// DAO 目标宗旨
     pub purpose: Vec<u8>,
@@ -276,6 +279,9 @@ pub mod pallet {
         /// 组织 id 不正确
         DaoIdNotMatch,
         /// The description of the DAO is too long.
+        /// 名字太长
+        NameTooLong,
+        /// The description of the DAO is too long.
         /// 组织目标太长
         PurposeTooLong,
         /// The description of the DAO is too long.
@@ -297,9 +303,11 @@ pub mod pallet {
         #[pallet::weight(T::WeightInfo::create_dao())]
         pub fn create_dao(
             origin: OriginFor<T>,
+            name: Vec<u8>,
             purpose: Vec<u8>,
             meta_data: Vec<u8>,
         ) -> DispatchResultWithPostInfo {
+            ensure!(name.len() <= 30, Error::<T>::NameTooLong);
             ensure!(purpose.len() <= 50, Error::<T>::PurposeTooLong);
             ensure!(meta_data.len() <= 1024, Error::<T>::MetaDataTooLong);
 
@@ -311,6 +319,7 @@ pub mod pallet {
             Daos::<T>::insert(
                 dao_id,
                 DaoInfo {
+                    name,
                     creator: creator.clone(),
                     start_block: now,
                     purpose,

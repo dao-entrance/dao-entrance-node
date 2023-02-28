@@ -10,8 +10,13 @@ pub const BOB: u64 = 2;
 pub const DAO_ID: u64 = 1;
 
 pub fn create_dao() {
-    daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![1; 4])
-        .unwrap();
+    daoent_dao::Pallet::<Test>::create_dao(
+        RuntimeOrigin::signed(ALICE),
+        vec![1; 4],
+        vec![1; 4],
+        vec![1; 4],
+    )
+    .unwrap();
     crate::Account::<Test>::insert(DAO_ID, ALICE)
 }
 

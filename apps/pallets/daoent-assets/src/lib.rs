@@ -394,7 +394,7 @@ pub mod pallet {
             )?;
 
             // 设置为会员，并且为用户添加 share
-            daoent_dao::Pallet::<T>::try_add_member(dao_id, who.clone()).unwrap();
+            daoent_dao::Pallet::<T>::try_add_member(dao_id, who.clone())?;
             <Self as MultiCurrency<T::AccountId>>::deposit(dao_id, &who, share_expect.into())?;
 
             Ok(().into())

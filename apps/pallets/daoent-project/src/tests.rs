@@ -14,8 +14,13 @@ pub const PROJECT_INDEX: ProjectId = 1;
 pub fn create_asset() -> DaoAssetId {
     let dao_id = daoent_dao::Pallet::<Test>::next_dao_id();
 
-    daoent_dao::Pallet::<Test>::create_dao(RuntimeOrigin::signed(ALICE), vec![1; 4], vec![1; 4])
-        .unwrap();
+    daoent_dao::Pallet::<Test>::create_dao(
+        RuntimeOrigin::signed(ALICE),
+        vec![1; 4],
+        vec![1; 4],
+        vec![1; 4],
+    )
+    .unwrap();
 
     daoent_assets::Pallet::<Test>::create_asset(
         RuntimeOrigin::signed(ALICE),
