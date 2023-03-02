@@ -506,6 +506,11 @@ impl daoent_guild::Config for Runtime {
     type WeightInfo = ();
 }
 
+impl wetee_app::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = ();
+}
+
 // DAO END
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -534,6 +539,7 @@ construct_runtime!(
         DAOGuild: daoent_guild,
         DAOProject: daoent_project,
         DAOGov: daoent_gov,
+        Wetee: wetee_app,
     }
 );
 

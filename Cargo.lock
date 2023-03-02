@@ -3843,6 +3843,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
+ "wetee-app",
 ]
 
 [[package]]
@@ -8409,7 +8410,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wetee"
+name = "wetee-app"
 version = "1.0.0"
 dependencies = [
  "daoent-dao",

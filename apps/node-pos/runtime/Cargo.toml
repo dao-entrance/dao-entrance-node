@@ -55,6 +55,7 @@ daoent-sudo = { path = "../../pallets/daoent-sudo", package = "daoent-sudo", def
 daoent-assets = { path = "../../pallets/daoent-assets", package = "daoent-assets", default-features = false}
 daoent-guild = { path = "../../pallets/daoent-guild", package = "daoent-guild", default-features = false}
 daoent-project = { path = "../../pallets/daoent-project", package = "daoent-project", default-features = false}
+wetee-app = { path = "../../pallets/wetee-app", package = "wetee-app", default-features = false}
 
 [build-dependencies]
 substrate-wasm-builder = { version = "5.0.0-dev", git = "https://github.com/paritytech/substrate.git", "branch" = "polkadot-v0.9.36" }
@@ -102,6 +103,7 @@ std = [
 	"daoent-assets/std",
     "daoent-guild/std",
     "daoent-project/std",
+	"wetee-app/std"
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
