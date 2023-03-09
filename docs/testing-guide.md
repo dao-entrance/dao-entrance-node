@@ -78,7 +78,7 @@
 - From the list of available proposal: Call (RuntimeCall) select daoGuild --> createGuild callable 
 - input dao id 1
 - input name and desc and metaData creator
-- Submit Transaction --> project propose successfully created
+- Submit Transaction --> project successfully created
 
 <img src="images/Firefox_Screenshot_2023-03-09T00-54-03.331Z.png" width="500" style="padding-left: 50px;">
 
@@ -112,7 +112,7 @@
 - input dao id 1
 - input project id 1
 - input task id 1
-- Submit Transaction --> project task successfully start
+- Submit Transaction --> successfully
 
 <img src="images/火狐截图_2023-02-18T04-24-16.236Z.png" width="500" style="padding-left: 50px;">
 
@@ -126,7 +126,7 @@
 - input dao id 1
 - input project id 1
 - select new user BOB
-- Submit Transaction --> project will get token
+- Submit Transaction --> successfully
 <img src="images/Firefox_Screenshot_2023-03-09T01-42-53.904Z.png" width="500" style="padding-left: 50px;">
 
 ## join project task as reviewer
@@ -136,7 +136,7 @@
 - input dao id 1
 - input project id 1
 - input task id 1
-- Submit Transaction --> project task successfully start
+- Submit Transaction --> successfully
 
 <img src="images/火狐截图_2023-02-18T04-16-24.622Z.png" width="500" style="padding-left: 50px;">
 
@@ -148,7 +148,7 @@
 - input dao id 1
 - input project id 1
 - input task id 1
-- Submit Transaction --> project task successfully created
+- Submit Transaction --> project task successfully start
 
 <img src="images/火狐截图_2023-02-18T03-47-49.440Z.png" width="500" style="padding-left: 50px;">
 
@@ -172,7 +172,7 @@
 - input project id 1
 - input task id 1
 - DaoentProjectReviewOpinion option select YES
-- Submit Transaction --> review successfully created
+- Submit Transaction --> make task review successfully
 
 <img src="images/火狐截图_2023-02-18T04-31-50.603Z.png" width="500" style="padding-left: 50px;">
 
@@ -183,6 +183,6 @@
 - input dao id 1
 - input project id 1
 - input task id 1
-- Submit Transaction --> requset for reviewer to review
+- Submit Transaction --> rtask done
 
 <img src="images/火狐截图_2023-02-18T04-34-16.726Z.png" width="500" style="padding-left: 50px;">
