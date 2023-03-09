@@ -12,7 +12,7 @@
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select dao --> createDao callable 
 
-<img src="images/火狐截图_2023-02-18T01-43-45.864Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T00-48-14.726Z.png" width="500" style="padding-left: 50px;">
 
 - Submit Transaction --> DAO successfully created
 
@@ -33,7 +33,7 @@
 - input initDaoAsset 1000000
 - Submit Transaction --> Asset successfully created
 
-<img src="images/火狐截图_2023-02-18T01-38-21.298Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T00-49-52.726Z.png" width="500" style="padding-left: 50px;">
 
 ## Create a DAO guild with gov
 - Open Developer --> Extrinsics section
@@ -45,7 +45,7 @@
 - input name and desc and metaData
 - Submit Transaction --> guild propose successfully created，after the DAO is approved by an internal vote, it can be created
 
-<img src="images/火狐截图_2023-02-18T02-17-12.486Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T02-15-32.983Z.png" width="500" style="padding-left: 50px;">
 
 ## Create a DAO project with gov
 - Open Developer --> Extrinsics section
@@ -57,7 +57,7 @@
 - input name and desc and metaData creator
 - Submit Transaction --> project propose successfully created, after the DAO is approved by an internal vote, it can be created
 
-<img src="images/火狐截图_2023-02-18T02-29-18.163Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T02-16-12.005Z.png" width="500" style="padding-left: 50px;">
 
 ## Create a DAO guild with sudo
 - Open Developer --> Extrinsics section
@@ -68,7 +68,7 @@
 - input name and desc and metaData
 - Submit Transaction --> guild successfully created
 
-<img src="images/火狐截图_2023-02-18T03-17-44.617Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T00-53-12.273Z.png" width="500" style="padding-left: 50px;">
 
 ## Create a DAO project with sudo
 - Open Developer --> Extrinsics section
@@ -79,7 +79,7 @@
 - input name and desc and metaData creator
 - Submit Transaction --> project propose successfully created
 
-<img src="images/火狐截图_2023-02-18T02-29-18.163Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T00-54-03.331Z.png" width="500" style="padding-left: 50px;">
 
 ## Apply fund for project with sudo
 - Open Developer --> Extrinsics section
@@ -91,7 +91,7 @@
 - input amount
 - Submit Transaction --> project will get token
 
-<img src="images/火狐截图_2023-02-18T03-45-56.920Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T00-54-54.941Z.png" width="500" style="padding-left: 50px;">
 
 ## Create project task 
 - Open Developer --> Extrinsics section
@@ -101,17 +101,8 @@
 - input name and desc and point priority
 - Submit Transaction --> project task successfully created
 
-<img src="images/火狐截图_2023-02-18T03-36-31.707Z.png" width="500" style="padding-left: 50px;">
+<img src="images/Firefox_Screenshot_2023-03-09T02-02-27.851Z.png" width="500" style="padding-left: 50px;">
 
-## join project task as reviewer
-- Open Developer --> Extrinsics section
-- From the list of available extrinsics select daoProject --> beTaskReview 
-- input dao id 1
-- input project id 1
-- input task id 1
-- Submit Transaction --> project task successfully start
-
-<img src="images/火狐截图_2023-02-18T04-16-24.622Z.png" width="500" style="padding-left: 50px;">
 
 ## join project task as assignee
 - Open Developer --> Extrinsics section
@@ -122,6 +113,29 @@
 - Submit Transaction --> project task successfully start
 
 <img src="images/火狐截图_2023-02-18T04-24-16.236Z.png" width="500" style="padding-left: 50px;">
+
+
+## new user join project with sudo (task reviewer must be other user)
+> sudo must called by ALICE
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoSudo --> sudo callable 
+- input dao id 1
+- From the list of available proposal: Call (RuntimeCall) select daoProject --> projectJoinRequest callable 
+- input dao id 1
+- input project id 1
+- select new user BOB
+- Submit Transaction --> project will get token
+<img src="images/Firefox_Screenshot_2023-03-09T01-42-53.904Z.png" width="500" style="padding-left: 50px;">
+
+## join project task as reviewer
+- Open Developer --> Extrinsics section
+- From the list of available extrinsics select daoProject --> beTaskReview 
+- input dao id 1
+- input project id 1
+- input task id 1
+- Submit Transaction --> project task successfully start
+
+<img src="images/火狐截图_2023-02-18T04-16-24.622Z.png" width="500" style="padding-left: 50px;">
 
 
 ## Start project task 
@@ -146,6 +160,7 @@
 <img src="images/火狐截图_2023-02-18T04-27-57.514Z.png" width="500" style="padding-left: 50px;">
 
 ## Reviewer make task review
+> sudo must called by BOB
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> requsetReview 
 - input dao id 1
