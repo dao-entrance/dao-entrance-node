@@ -39,6 +39,9 @@ pub struct TeeApp<AccountId, BlockNumber> {
     /// img of the App.
     /// image 目标宗旨
     pub image: Vec<u8>,
+    /// port of service
+    /// 服务端口号
+    pub port: Vec<u32>,
     /// State of the App
     /// App状态
     status: u8,
@@ -117,6 +120,7 @@ pub mod pallet {
             origin: OriginFor<T>,
             name: Vec<u8>,
             image: Vec<u8>,
+            port: Vec<u32>,
         ) -> DispatchResultWithPostInfo {
             let creator = ensure_signed(origin)?;
 
@@ -130,6 +134,7 @@ pub mod pallet {
                     image,
                     creator: creator.clone(),
                     start_block: now,
+                    port,
                     status: 0,
                 },
             );
