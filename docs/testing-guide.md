@@ -71,6 +71,7 @@
 <img src="images/Firefox_Screenshot_2023-03-09T00-53-12.273Z.png" width="500" style="padding-left: 50px;">
 
 ## Create a DAO project with sudo
+> creator is the init project user
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoSudo --> sudo callable 
 - input dao id 1
@@ -105,6 +106,7 @@
 
 
 ## join project task as assignee
+> sudo must called by Alice
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> joinTask 
 - input dao id 1
@@ -128,6 +130,7 @@
 <img src="images/Firefox_Screenshot_2023-03-09T01-42-53.904Z.png" width="500" style="padding-left: 50px;">
 
 ## join project task as reviewer
+> sudo must called by BOB
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> beTaskReview 
 - input dao id 1
@@ -139,6 +142,7 @@
 
 
 ## Start project task 
+> sudo must called by Alice
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> startTask 
 - input dao id 1
@@ -150,6 +154,7 @@
 
 
 ## Project task requset review
+> sudo must called by Alice
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> requsetReview 
 - input dao id 1
@@ -172,6 +177,7 @@
 <img src="images/火狐截图_2023-02-18T04-31-50.603Z.png" width="500" style="padding-left: 50px;">
 
 ## Project task done
+> sudo must called by Alice
 - Open Developer --> Extrinsics section
 - From the list of available extrinsics select daoProject --> requsetReview 
 - input dao id 1
