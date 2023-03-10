@@ -11,7 +11,6 @@ use frame_support::{
     traits::{ConstU16, ConstU32, ConstU64, Contains},
     PalletId, RuntimeDebug,
 };
-use frame_system;
 use orml_traits::parameter_type_with_key;
 use scale_info::TypeInfo;
 use sp_core::H256;

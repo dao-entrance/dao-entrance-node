@@ -7,7 +7,6 @@ use frame_support::{
     traits::{ConstU16, ConstU32, ConstU64},
     PalletId,
 };
-use frame_system;
 use sp_core::H256;
 use sp_runtime::{
     testing::Header,
@@ -66,9 +65,10 @@ impl frame_system::Config for Test {
 impl TryFrom<RuntimeCall> for u64 {
     type Error = ();
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
-        match call {
-            _ => Ok(0u64),
-        }
+        // match call {
+        //     _ => Ok(0u64),
+        // }
+        Ok(0u64)
     }
 }
 

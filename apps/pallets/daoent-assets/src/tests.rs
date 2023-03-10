@@ -27,7 +27,7 @@ pub fn create_asset() -> DaoAssetId {
     .unwrap();
 
     let proposal = RuntimeCall::DAOAsset(daoent_assets::Call::set_existenial_deposit {
-        dao_id: dao_id,
+        dao_id,
         existenial_deposit: 1,
     });
 
@@ -37,7 +37,7 @@ pub fn create_asset() -> DaoAssetId {
         Box::new(proposal)
     ));
 
-    return dao_id;
+    dao_id
 }
 
 #[test]

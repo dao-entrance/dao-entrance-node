@@ -3,7 +3,6 @@
 
 use crate as daoent_project;
 use crate::mock::*;
-use daoent_assets;
 use daoent_gov::MemmberData;
 use daoent_primitives::types::AccountIdType;
 use daoent_primitives::types::DaoAssetId;
@@ -31,7 +30,7 @@ pub fn create_asset() -> DaoAssetId {
     .unwrap();
 
     let proposal = RuntimeCall::DAOAsset(daoent_assets::Call::set_existenial_deposit {
-        dao_id: dao_id,
+        dao_id,
         existenial_deposit: 1,
     });
 
@@ -55,7 +54,7 @@ pub fn create_asset() -> DaoAssetId {
         Box::new(proposal2)
     ));
 
-    return dao_id;
+    dao_id
 }
 
 pub fn project_join_reques() -> DaoAssetId {
@@ -70,7 +69,7 @@ pub fn project_join_reques() -> DaoAssetId {
 
     // 创建提案
     let proposal = RuntimeCall::DAOProject(daoent_project::Call::project_join_request {
-        dao_id: dao_id,
+        dao_id,
         project_id: PROJECT_INDEX,
         who: BOB,
     });
@@ -123,7 +122,7 @@ pub fn project_join_reques() -> DaoAssetId {
     println!("项目成员 => {:?}", ms);
     assert!(ms.len() == 2);
 
-    return dao_id;
+    dao_id
 }
 
 #[test]
@@ -243,15 +242,12 @@ pub fn print_account(dao_id: DaoAssetId) {
     .unwrap();
 
     // 判断现在项目的
-    print!(
-        "dao_id => {:?} project_dao => {:?} dao => {:?}\n",
+    println!(
+        "dao_id => {:?} project_dao => {:?} dao => {:?}",
         dao_id, project_dao, dao
     );
 
     let alice_dao = daoent_assets::Pallet::<Test>::get_balance(dao_id, ALICE).unwrap();
     let bob_dao = daoent_assets::Pallet::<Test>::get_balance(dao_id, BOB).unwrap();
-    print!(
-        "alice_dao => {:?} ||| bob_dao => {:?} \n",
-        alice_dao, bob_dao
-    );
+    println!("alice_dao => {:?} ||| bob_dao => {:?} ", alice_dao, bob_dao);
 }

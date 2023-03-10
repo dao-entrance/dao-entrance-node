@@ -226,7 +226,7 @@ pub mod pallet {
         }
 
         #[pallet::call_index(003)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn set_existenial_deposit(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -333,12 +333,15 @@ pub mod pallet {
             );
 
             // 从DAO转出手续费 TODO
-            match daoent_dao::Daos::<T>::get(dao_id) {
-                Some(dao) => {
-                    let _dao_account = dao.dao_account_id;
-                }
-                _ => {}
-            };
+            // match daoent_dao::Daos::<T>::get(dao_id) {
+            //     Some(dao) => {
+            //         let _dao_account = dao.dao_account_id;
+            //     }
+            // };
+
+            if let Some(dao) = daoent_dao::Daos::<T>::get(dao_id) {
+                let _dao_account = dao.dao_account_id;
+            }
 
             ensure!(
                 Self::is_exists_metadata(dao_id),
@@ -351,7 +354,7 @@ pub mod pallet {
 
         /// 成为会员
         #[pallet::call_index(007)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn join_request(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,

@@ -18,7 +18,6 @@ use traits::*;
 
 use orml_traits::MultiCurrency;
 
-use daoent_assets;
 use daoent_dao::{self};
 use daoent_primitives::types::DaoAssetId;
 
@@ -543,7 +542,7 @@ pub mod pallet {
             <PublicProps<T>>::insert(dao_id, public_props);
 
             // 确认用户属于可提案的用户范围
-            Self::check_auth_for_vote(dao_id, member_data.clone(), who.clone())?;
+            Self::check_auth_for_vote(dao_id, member_data.clone(), who)?;
 
             // 获取抵押
             let mut referendum_index: Option<ReferendumIndex> = None;
@@ -621,7 +620,7 @@ pub mod pallet {
                                     opinion,
                                     vote_weight,
                                     unlock_block: now + duration,
-                                    referendum_index: referendum_index,
+                                    referendum_index,
                                 },
                             );
                         } else {
@@ -925,14 +924,14 @@ pub mod pallet {
         }
 
         #[pallet::call_index(015)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn update_vote_model(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
             model: u8,
         ) -> DispatchResultWithPostInfo {
             let me = ensure_signed(origin)?;
-            daoent_dao::Pallet::<T>::ensrue_dao_root(me.clone(), dao_id)?;
+            daoent_dao::Pallet::<T>::ensrue_dao_root(me, dao_id)?;
 
             <VoteModel<T>>::insert(dao_id, model);
             Self::deposit_event(Event::<T>::VoteModelUpdate { dao_id, model });
@@ -947,12 +946,11 @@ pub mod pallet {
             dao_id: DaoAssetId,
             member_data: MemmberData<u64>,
         ) -> result::Result<BoundedVec<T::AccountId, T::MaxMembers>, DispatchError> {
-            let ms: BoundedVec<T::AccountId, T::MaxMembers>;
-            match member_data {
-                MemmberData::GLOBAL => ms = <daoent_dao::Members<T>>::get(dao_id),
-                MemmberData::GUILD(v) => ms = <daoent_dao::GuildMembers<T>>::get(dao_id, v),
-                MemmberData::PROJECT(v) => ms = <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
-            }
+            let ms: BoundedVec<T::AccountId, T::MaxMembers> = match member_data {
+                MemmberData::GLOBAL => <daoent_dao::Members<T>>::get(dao_id),
+                MemmberData::GUILD(v) => <daoent_dao::GuildMembers<T>>::get(dao_id, v),
+                MemmberData::PROJECT(v) => <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
+            };
             Ok(ms)
         }
 
@@ -973,12 +971,11 @@ pub mod pallet {
             member_data: MemmberData<u64>,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
-            let ms: BoundedVec<T::AccountId, T::MaxMembers>;
-            match member_data {
-                MemmberData::GLOBAL => ms = <daoent_dao::Members<T>>::get(dao_id),
-                MemmberData::GUILD(v) => ms = <daoent_dao::GuildMembers<T>>::get(dao_id, v),
-                MemmberData::PROJECT(v) => ms = <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
-            }
+            let ms: BoundedVec<T::AccountId, T::MaxMembers> = match member_data {
+                MemmberData::GLOBAL => <daoent_dao::Members<T>>::get(dao_id),
+                MemmberData::GUILD(v) => <daoent_dao::GuildMembers<T>>::get(dao_id, v),
+                MemmberData::PROJECT(v) => <daoent_dao::ProjectMembers<T>>::get(dao_id, v),
+            };
             let index = ms.binary_search(&who).ok().ok_or(Error::<T>::Gov403)?;
 
             Ok(index)

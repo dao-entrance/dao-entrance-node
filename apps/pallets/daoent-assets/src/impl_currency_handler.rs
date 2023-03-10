@@ -60,10 +60,10 @@ impl<T: Config>
             asset_id,
             DaoAssetInfo {
                 owner: user.clone(),
-                metadata: metadata,
+                metadata,
             },
         );
-        Self::deposit_event(Event::CreateAsset(user.clone(), asset_id, amount));
+        Self::deposit_event(Event::CreateAsset(user, asset_id, amount));
 
         Ok(())
     }

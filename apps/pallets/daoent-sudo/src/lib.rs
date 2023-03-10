@@ -159,7 +159,7 @@ pub mod pallet {
             let is_close = CloseDao::<T>::get(dao_id);
 
             ensure!(
-                is_close.is_none() || is_close.unwrap() == false,
+                is_close.is_none() || !is_close.unwrap(),
                 Error::<T>::RootNotExists
             );
 

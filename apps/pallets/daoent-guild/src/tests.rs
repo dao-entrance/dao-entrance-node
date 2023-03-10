@@ -3,7 +3,6 @@
 
 use crate as daoent_guild;
 use crate::mock::*;
-use daoent_assets;
 use daoent_gov::MemmberData;
 use daoent_primitives::types::AccountIdType;
 use daoent_primitives::types::DaoAssetId;
@@ -29,7 +28,7 @@ pub fn create_asset() -> DaoAssetId {
     .unwrap();
 
     let proposal = RuntimeCall::DAOAsset(daoent_assets::Call::set_existenial_deposit {
-        dao_id: dao_id,
+        dao_id,
         existenial_deposit: 1,
     });
 
@@ -39,7 +38,7 @@ pub fn create_asset() -> DaoAssetId {
         Box::new(proposal)
     ));
 
-    return dao_id;
+    dao_id
 }
 
 #[test]
@@ -56,7 +55,7 @@ pub fn test_guild_join_request() {
 
         // 创建提案
         let proposal = RuntimeCall::DAOGuild(daoent_guild::Call::guild_join_request {
-            dao_id: dao_id,
+            dao_id,
             guild_id: 0,
             who: BOB,
         });

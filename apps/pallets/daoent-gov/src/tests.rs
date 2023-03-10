@@ -131,7 +131,7 @@ pub fn propose_should_work() {
 
 #[test]
 pub fn second_should_work() {
-    new_test_run().execute_with(|| second());
+    new_test_run().execute_with(second);
 }
 
 #[test]

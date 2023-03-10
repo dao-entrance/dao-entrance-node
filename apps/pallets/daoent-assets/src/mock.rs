@@ -137,10 +137,11 @@ impl daoent_dao::Config for Test {
 
 impl TryFrom<RuntimeCall> for u32 {
     type Error = ();
-    fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
-        match call {
-            _ => Ok(0u32),
-        }
+    fn try_from(_call: RuntimeCall) -> Result<Self, Self::Error> {
+        // match call {
+        //     _ => Ok(0u32),
+        // }
+        Ok(0u32)
     }
 }
 

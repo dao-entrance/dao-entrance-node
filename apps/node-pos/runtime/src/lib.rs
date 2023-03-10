@@ -323,7 +323,7 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, BlockNumber, DispatchError> for
 
         match self {
             Pledge::FungToken(x) => {
-                DAOAsset::reserve(dao_id.clone(), who.clone(), *x)?;
+                DAOAsset::reserve(*dao_id, who.clone(), *x)?;
                 if vote_model == 1 {
                     // 1 account = 1 vote
                     let amount = 1;
@@ -343,8 +343,8 @@ impl PledgeTrait<Balance, AccountId, DaoAssetId, BlockNumber, DispatchError> for
         }
         match self {
             Pledge::FungToken(x) => {
-                DAOAsset::unreserve(dao_id.clone(), who.clone(), *x)?;
-                return Ok(());
+                DAOAsset::unreserve(*dao_id, who.clone(), *x)?;
+                Ok(())
             }
         }
         // Err(daoent_gov::Error::<Runtime>::PledgeNotEnough)?
@@ -414,12 +414,14 @@ impl TryFrom<RuntimeCall> for CallId {
     type Error = ();
     fn try_from(call: RuntimeCall) -> Result<Self, Self::Error> {
         match call {
-            RuntimeCall::DAO(func) => match func {
-                daoent_dao::Call::create_dao { .. } => Ok(101 as CallId),
-                _ => Err(()),
-            },
+            RuntimeCall::DAO(daoent_dao::Call::create_dao { .. }) => Ok(101 as CallId),
             RuntimeCall::DAOAsset(func) => match func {
                 daoent_assets::Call::create_asset { .. } => Ok(201 as CallId),
+                daoent_assets::Call::set_existenial_deposit { .. } => Ok(202 as CallId),
+                daoent_assets::Call::set_metadata { .. } => Ok(203 as CallId),
+                daoent_assets::Call::burn { .. } => Ok(204 as CallId),
+                daoent_assets::Call::transfer { .. } => Ok(205 as CallId),
+                daoent_assets::Call::join_request { .. } => Ok(206 as CallId),
                 _ => Err(()),
             },
             RuntimeCall::DAOGuild(func) => match func {

@@ -5,7 +5,6 @@ use frame_support::inherent::Vec;
 use frame_support::pallet_prelude::*;
 use frame_system::{ensure_signed, pallet_prelude::*};
 
-use daoent_assets;
 use daoent_dao::{self as dao};
 use daoent_primitives::types::DaoAssetId;
 use sp_std::convert::TryInto;
@@ -53,7 +52,7 @@ pub mod pallet {
     #[pallet::call]
     impl<T: Config> Pallet<T> {
         #[pallet::call_index(001)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn guild_join_request(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -61,7 +60,7 @@ pub mod pallet {
             who: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let me = ensure_signed(origin)?;
-            daoent_dao::Pallet::<T>::ensrue_dao_root(me.clone(), dao_id)?;
+            daoent_dao::Pallet::<T>::ensrue_dao_root(me, dao_id)?;
 
             daoent_dao::Pallet::<T>::try_add_guild_member(dao_id, guild_id, who.clone())?;
 
@@ -98,9 +97,9 @@ pub mod pallet {
                         creator: creator.clone(),
                         start_block: now,
                         name,
-                        desc: desc,
+                        desc,
                         status: dao::Status::Active,
-                        meta_data: meta_data,
+                        meta_data,
                     },
                 )
                 .map_err(|_| dao::Error::<T>::GuildCreateError)?;

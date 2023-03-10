@@ -433,7 +433,7 @@ pub mod pallet {
             let guild = <Guilds<T>>::get(dao_id);
             ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
 
-            let gindex: u64 = guild_id.into();
+            let gindex: u64 = guild_id;
             let mut members = <GuildMembers<T>>::get(dao_id, gindex);
             let index = members
                 .binary_search(&who)
@@ -441,7 +441,7 @@ pub mod pallet {
                 .ok_or(Error::<T>::InVailCall)?;
 
             members
-                .try_insert(index, who.clone())
+                .try_insert(index, who)
                 .map_err(|_| Error::<T>::TooManyMembers)?;
 
             <GuildMembers<T>>::insert(dao_id, gindex, &members);
@@ -458,7 +458,7 @@ pub mod pallet {
             let guild = <Guilds<T>>::get(dao_id);
             ensure!(!guild.is_empty(), Error::<T>::BadOrigin);
 
-            let gindex: u64 = guild_id.into();
+            let gindex: u64 = guild_id;
             let mut members = <GuildMembers<T>>::get(dao_id, gindex);
             let index = members
                 .binary_search(&who)
@@ -482,7 +482,7 @@ pub mod pallet {
                 .err()
                 .ok_or(Error::<T>::InVailCall)?;
             members
-                .try_insert(index, who.clone())
+                .try_insert(index, who)
                 .map_err(|_| Error::<T>::GuildCreateError)?;
 
             <Members<T>>::insert(dao_id, &members);
@@ -511,7 +511,7 @@ pub mod pallet {
             project_id: ProjectId,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
-            let gindex: u64 = project_id.into();
+            let gindex: u64 = project_id;
             let mut members = <ProjectMembers<T>>::try_get(dao_id, gindex).unwrap_or_default();
             let index = members
                 .binary_search(&who)
@@ -519,7 +519,7 @@ pub mod pallet {
                 .ok_or(Error::<T>::InVailCall)?;
 
             members
-                .try_insert(index, who.clone())
+                .try_insert(index, who)
                 .map_err(|_| Error::<T>::TooManyMembers)?;
 
             <ProjectMembers<T>>::insert(dao_id, gindex, &members);
@@ -533,7 +533,7 @@ pub mod pallet {
             project_id: ProjectId,
             who: T::AccountId,
         ) -> result::Result<usize, DispatchError> {
-            let gindex: u64 = project_id.into();
+            let gindex: u64 = project_id;
             let mut members = <ProjectMembers<T>>::try_get(dao_id, gindex).unwrap_or_default();
             let index = members
                 .binary_search(&who)
@@ -552,7 +552,7 @@ pub mod pallet {
             point: u32,
         ) -> result::Result<u32, DispatchError> {
             let mut p = <MemberPoint<T>>::get(dao_id, who.clone());
-            p = p + point;
+            p += point;
             <MemberPoint<T>>::insert(dao_id, who, p);
             Ok(p)
         }

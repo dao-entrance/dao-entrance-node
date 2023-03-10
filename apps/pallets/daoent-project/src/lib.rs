@@ -1,4 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
+#![allow(clippy::too_many_arguments)]
 
 use frame_support::codec::{Decode, Encode};
 use frame_support::inherent::Vec;
@@ -257,7 +259,7 @@ pub mod pallet {
     impl<T: Config> Pallet<T> {
         /// 申请加入团队
         #[pallet::call_index(001)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn project_join_request(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -265,7 +267,7 @@ pub mod pallet {
             who: T::AccountId,
         ) -> DispatchResultWithPostInfo {
             let me = ensure_signed(origin)?;
-            daoent_dao::Pallet::<T>::ensrue_dao_root(me.clone(), dao_id)?;
+            daoent_dao::Pallet::<T>::ensrue_dao_root(me, dao_id)?;
 
             daoent_dao::Pallet::<T>::try_add_project_member(dao_id, project_id, who.clone())?;
 
@@ -276,7 +278,7 @@ pub mod pallet {
 
         /// 创建项目
         #[pallet::call_index(002)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn create_project(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -305,7 +307,7 @@ pub mod pallet {
 
         /// 为项目申请资金
         #[pallet::call_index(003)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn apply_project_funds(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -329,7 +331,7 @@ pub mod pallet {
 
         /// 创建任务
         #[pallet::call_index(004)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn create_task(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -351,7 +353,7 @@ pub mod pallet {
             let mut task = TaskInfo {
                 id: task_id,
                 name,
-                project_id: project_id,
+                project_id,
                 description,
                 point,
                 priority,
@@ -397,7 +399,7 @@ pub mod pallet {
 
         /// 加入任务
         #[pallet::call_index(005)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn join_task(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -416,7 +418,7 @@ pub mod pallet {
             // 确保任务人数
             let max_assignee: usize = task.max_assignee.try_into().unwrap();
             ensure!(
-                task.assignees.len() + 1 <= max_assignee,
+                task.assignees.len() < max_assignee,
                 Error::<T>::TooManyAssignee
             );
 
@@ -440,7 +442,7 @@ pub mod pallet {
 
         /// 离开项目
         #[pallet::call_index(006)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn leave_task(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -475,7 +477,7 @@ pub mod pallet {
 
         /// 加入项目审核团队
         #[pallet::call_index(007)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn be_task_review(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -515,7 +517,7 @@ pub mod pallet {
 
         /// 离开任务审核
         #[pallet::call_index(008)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn leave_task_review(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -548,7 +550,7 @@ pub mod pallet {
 
         /// 开始任务
         #[pallet::call_index(009)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn start_task(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -560,7 +562,7 @@ pub mod pallet {
             Self::check_auth_for_project(dao_id, task.project_id, me.clone())?;
 
             // 确保审核人数大于1
-            ensure!(task.reviewers.len() > 0, Error::<T>::NoReviewer);
+            ensure!(!task.reviewers.is_empty(), Error::<T>::NoReviewer);
             // 确保任务只能是未开始加入
             ensure!(task.status == TaskStatus::ToDo, Error::<T>::InVailCall);
 
@@ -582,7 +584,7 @@ pub mod pallet {
 
         /// 申请审核
         #[pallet::call_index(010)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn requset_review(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -624,7 +626,7 @@ pub mod pallet {
 
         /// 完成任务
         #[pallet::call_index(011)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn task_done(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -690,7 +692,7 @@ pub mod pallet {
 
         /// 发送审核报告
         #[pallet::call_index(012)]
-        #[pallet::weight(1500_000_000)]
+        #[pallet::weight(1_500_000_000)]
         pub fn make_review(
             origin: OriginFor<T>,
             dao_id: DaoAssetId,
@@ -728,8 +730,8 @@ pub mod pallet {
                 option: opinion.clone(),
             });
             match opinion {
-                ReviewOpinion::YES => review.tally.yes = review.tally.yes + 1,
-                ReviewOpinion::NO => review.tally.no = review.tally.no + 1,
+                ReviewOpinion::YES => review.tally.yes += 1,
+                ReviewOpinion::NO => review.tally.no += 1,
             }
 
             <TaskReviews<T>>::insert(task_id, review);
@@ -748,11 +750,7 @@ pub mod pallet {
             project.id = project_id;
 
             <DaoProjects<T>>::insert(dao_id, project_id, project.clone());
-            daoent_dao::Pallet::<T>::try_add_project_member(
-                dao_id,
-                project_id.clone(),
-                project.creator.clone(),
-            )?;
+            daoent_dao::Pallet::<T>::try_add_project_member(dao_id, project_id, project.creator)?;
             NextProjectId::<T>::put(project_id + 1);
 
             Ok(project_id)

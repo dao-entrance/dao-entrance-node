@@ -80,7 +80,7 @@ impl CheckedAdd for DaoId {
 /// 定义可以被转换为 用户id 的泛型
 pub trait AccountIdType<AccountId>: Sized {
     /// 转换为用户id
-    fn into_account(&self) -> AccountId;
+    fn into_account(self) -> AccountId;
 
     /// 从用户id转换为本结构
     fn try_from_account(a: &AccountId) -> Option<Self>;
